@@ -5,6 +5,35 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
+
+
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+
+
+
+
+
+  <ItemGroup>
+    <Folder Include="src\" />
+  </ItemGroup>
+
+
+
+  <ItemGroup>
+    <None Remove="SphereMeshContext\Python\points" />
+    <Resource Include="SphereMeshContext\Python\points">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <None Remove="SphereMeshContext\Python\elements" />
+    <Resource Include="SphereMeshContext\Python\elements">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
 
 </Project>

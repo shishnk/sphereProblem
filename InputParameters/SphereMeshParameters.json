@@ -1,0 +1,10 @@
+﻿{
+  "Center": [
+    0,
+    0,
+    0
+  ],
+  "Radius": 1.0,
+  "ThetaSplits": 10,
+  "PhiSplits": 10
+}
