@@ -14,7 +14,7 @@ public abstract class SphereMeshBuilder(SphereMeshParameters parameters)
 
     protected void CreatePointsInternal(int phiSplits, int thetaSplits)
     {
-        _points = new Point3D[parameters.PhiSplits * parameters.ThetaSplits];
+        _points = new Point3D[phiSplits * thetaSplits];
 
         var phi = Math.PI / (phiSplits - 1);
         var theta = 2.0 * Math.PI / (thetaSplits - 1);
@@ -36,22 +36,23 @@ public abstract class SphereMeshBuilder(SphereMeshParameters parameters)
             _elements ?? throw new NullReferenceException());
     }
 
-    private void WriteToFile(IReadOnlyList<Point3D> points)
+    private void WriteToFile(IEnumerable<Point3D> points)
     {
-        using StreamWriter sw1 = new("Python/points"), sw2 = new("Python/elements");
+        using StreamWriter sw1 = new("../../../SphereMeshContext/Python/points"),
+            sw2 = new("../../../SphereMeshContext/Python/elements");
 
         foreach (var point in points)
         {
             sw1.WriteLine(point.ToString());
         }
-        
+
         foreach (var element in _elements!)
         {
-            foreach (var elementNode in element.Nodes)
+            for (var i = 0; i < 3; i++)
             {
-                sw2.Write(elementNode + " ");
+                sw2.Write(element.Nodes[i] + " ");
             }
-            
+
             sw2.WriteLine();
         }
     }
@@ -76,8 +77,8 @@ public class LinearSphereMeshBuilder(SphereMeshParameters parameters) : SphereMe
                 var v3 = (i + 1) * parameters.ThetaSplits + j;
                 var v4 = (i + 1) * parameters.ThetaSplits + j + 1;
 
-                _elements[idx] = new(new[] { v1, v2, v3 });
-                _elements[idx + 1] = new(new[] { v2, v4, v3 });
+                _elements[idx] = new(new[] { v1, v3, v2 });
+                _elements[idx + 1] = new(new[] { v4, v2, v3 });
             }
         }
     }
@@ -87,10 +88,34 @@ public class QuadraticSphereMeshBuilder(SphereMeshParameters parameters) : Spher
 {
     protected override int ElementSize => 6;
 
-    public override void CreatePoints() => CreatePointsInternal(2 * parameters.PhiSplits, 2 * parameters.ThetaSplits);
+    public override void CreatePoints() =>
+        CreatePointsInternal(2 * parameters.PhiSplits - 1, 2 * parameters.ThetaSplits - 1);
 
     public override void CreateElements()
     {
-        throw new NotImplementedException();
+        const int localSize = 3;
+        _elements = new FiniteElement[2 * (parameters.PhiSplits - 1) * (parameters.ThetaSplits - 1)];
+        Span<int> nodes = stackalloc int[ElementSize + localSize];
+
+        for (int j = 0, idx = 0; j < parameters.PhiSplits - 1; j++)
+        {
+            for (int i = 0; i < parameters.ThetaSplits - 1; i++, idx += 2)
+            {
+                for (int k = 0; k < ElementSize + localSize; k++)
+                {
+                    var lx = k % localSize;
+                    var ly = k / localSize;
+
+                    var ox = i * (localSize - 1) + lx;
+                    var oy = ly * ((localSize - 1) * parameters.ThetaSplits - 1) +
+                             j * ((localSize - 1) * parameters.ThetaSplits - 1) * (localSize - 1);
+
+                    nodes[k] = ox + oy;
+                }
+
+                _elements[idx] = new(new[] { nodes[0], nodes[6], nodes[2], nodes[3], nodes[4], nodes[1] });
+                _elements[idx + 1] = new(new[] { nodes[8], nodes[2], nodes[6], nodes[5], nodes[4], nodes[7] });
+            }
+        }
     }
 }

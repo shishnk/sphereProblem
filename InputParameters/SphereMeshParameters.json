@@ -5,6 +5,6 @@
     0
   ],
   "Radius": 1.0,
-  "ThetaSplits": 10,
-  "PhiSplits": 10
+  "Theta splits": 10,
+  "Phi splits": 10
 }

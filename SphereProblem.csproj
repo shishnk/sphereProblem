@@ -34,6 +34,9 @@
     <Resource Include="SphereMeshContext\Python\elements">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
+    <None Update="InputParameters\SphereMeshParameters.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

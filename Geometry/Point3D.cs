@@ -14,7 +14,7 @@ public class Point3DJsonConverter : JsonConverter
         if (reader.TokenType == JsonToken.StartArray)
         {
             var array = JArray.Load(reader);
-            if (array.Count == 2)
+            if (array.Count == 3)
                 return new Point3D(array[0].Value<double>(), array[1].Value<double>(), array[2].Value<double>());
             throw new FormatException($"Wrong vector length({array.Count})!");
         }
