@@ -59,5 +59,8 @@ public readonly record struct Point3D(double X, double Y, double Z)
     public static Point3D operator -(Point3D a, Point3D b) => new(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Point3D operator *(double b, Point3D a) => new(a.X * b, a.Y * b, a.Z * b);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Point3D((double x, double y, double z) tuple) => new(tuple.x, tuple.y, tuple.z);
 }

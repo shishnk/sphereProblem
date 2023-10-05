@@ -2,7 +2,7 @@
 
 namespace SphereProblem.SphereMeshContext;
 
-public abstract class SphereMeshBuilder(SphereMeshParameters parameters)
+public abstract class BaseSphereMeshBuilder(SphereMeshParameters parameters)
 {
     private Point3D[]? _points;
     private SphereMesh? _sphereMesh;
@@ -58,7 +58,7 @@ public abstract class SphereMeshBuilder(SphereMeshParameters parameters)
     }
 }
 
-public class LinearSphereMeshBuilder(SphereMeshParameters parameters) : SphereMeshBuilder(parameters)
+public class Linear2DBaseSphereMeshBuilder(SphereMeshParameters parameters) : BaseSphereMeshBuilder(parameters)
 {
     protected override int ElementSize => 3;
 
@@ -84,7 +84,7 @@ public class LinearSphereMeshBuilder(SphereMeshParameters parameters) : SphereMe
     }
 }
 
-public class QuadraticSphereMeshBuilder(SphereMeshParameters parameters) : SphereMeshBuilder(parameters)
+public class Quadratic2DBaseSphereMeshBuilder(SphereMeshParameters parameters) : BaseSphereMeshBuilder(parameters)
 {
     protected override int ElementSize => 6;
 
@@ -117,5 +117,20 @@ public class QuadraticSphereMeshBuilder(SphereMeshParameters parameters) : Spher
                 _elements[idx + 1] = new(new[] { nodes[8], nodes[2], nodes[6], nodes[5], nodes[4], nodes[7] });
             }
         }
+    }
+}
+
+public class Linear3DSphereMeshBuilder(SphereMeshParameters parameters) : BaseSphereMeshBuilder(parameters)
+{
+    protected override int ElementSize => 4;
+
+    public override void CreatePoints()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void CreateElements()
+    {
+        throw new NotImplementedException();
     }
 }

@@ -1,8 +1,8 @@
 ﻿namespace SphereProblem.SphereMeshContext;
 
-public class SphereMeshManager(SphereMeshBuilder builder)
+public class SphereMeshManager(BaseSphereMeshBuilder builder)
 {
-    public SphereMeshBuilder Builder => builder;
+    public BaseSphereMeshBuilder Builder => builder;
 
     public SphereMesh GetMeshInstance()
     {
