@@ -18,7 +18,7 @@ public class Vector<T>(int length) : IEnumerable<T>
 
     public static T operator *(Vector<T> a, Vector<T> b)
     {
-        T result = T.Zero;
+        var result = T.Zero;
 
         for (int i = 0; i < a.Length; i++)
         {

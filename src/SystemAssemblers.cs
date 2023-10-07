@@ -6,16 +6,18 @@ namespace SphereProblem;
 
 public class SystemAssembler(IBasis3D basis, SphereMesh mesh, Integrator integrator)
 {
-    private Matrix<double>? _baseMassMatrix;
-    private Matrix<double>? _baseStiffnessMatrix;
-    private readonly Point3D[] _cachedVertices = new Point3D[4]; // for tetrahedron
+    private readonly Matrix<double> _baseStiffnessMatrix = new(basis.Size);
+    private readonly Point3D[] _cachedVertices = new Point3D[basis.Size]; // for tetrahedron
+    private readonly Queue<(double determinant, Matrix<double> inverse)> _calculates = new(5); // quadratures capacity
+    private double _lastLambda = 1.0;
 
     public IBasis3D Basis => basis;
     public SphereMesh Mesh => mesh;
     public Integrator Integrator => integrator;
-    public Matrix<double> StiffnessMatrix { get; } = new(basis.Size);
-    public SparseMatrix? GlobalMatrix { get; set; }
+    public Matrix<double> StiffnessMatrix => _lastLambda * _baseStiffnessMatrix!;
     public Matrix<double> MassMatrix { get; } = new(basis.Size);
+
+    public SparseMatrix? GlobalMatrix { get; set; }
 
     public void FillGlobalMatrix(int i, int j, double value)
     {
@@ -53,66 +55,53 @@ public class SystemAssembler(IBasis3D basis, SphereMesh mesh, Integrator integra
 
         // var determinant = CalculateDeterminant();
         var determinant = 1.0;
+        _lastLambda = 1.0; // TODO
 
         Basis.DisposeCache();
+        Basis.UpdateCache(_cachedVertices);
 
-        if (_baseStiffnessMatrix == null || _baseMassMatrix == null)
-            // only for linear, because Jacobian is constant, TODO: remove after adding quadratic basis
+        for (int i = 0; i < Basis.Size; i++)
         {
-            for (int i = 0; i < Basis.Size; i++)
+            for (int j = 0; j <= i; j++)
             {
-                for (int j = 0; j <= i; j++)
+                var i1 = i;
+                var j1 = j;
+
+                var function = double (Point3D p) =>
                 {
-                    var i1 = i;
-                    var j1 = j;
-                    var function = double (Point3D p) =>
-                    {
-                        var dxFi1 = Basis.GetDPsi(i1, 0, p, _cachedVertices);
-                        var dxFi2 = Basis.GetDPsi(j1, 0, p, _cachedVertices);
-                        var dyFi1 = Basis.GetDPsi(i1, 1, p, _cachedVertices);
-                        var dyFi2 = Basis.GetDPsi(j1, 1, p, _cachedVertices);
-                        var dzFi1 = Basis.GetDPsi(i1, 2, p, _cachedVertices);
-                        var dzFi2 = Basis.GetDPsi(j1, 2, p, _cachedVertices);
+                    var dxFi1 = Basis.GetDPsi(i1, 0, p, _cachedVertices);
+                    var dxFi2 = Basis.GetDPsi(j1, 0, p, _cachedVertices);
+                    var dyFi1 = Basis.GetDPsi(i1, 1, p, _cachedVertices);
+                    var dyFi2 = Basis.GetDPsi(j1, 1, p, _cachedVertices);
+                    var dzFi1 = Basis.GetDPsi(i1, 2, p, _cachedVertices);
+                    var dzFi2 = Basis.GetDPsi(j1, 2, p, _cachedVertices);
 
-                        var calculates = CalculateJacobian(ielem, p, _cachedVertices);
-                        var vector1 = new Vector<double>(calculates.inverse.Size) { new[] { dxFi1, dyFi1, dzFi1 } };
-                        var vector2 = new Vector<double>(calculates.inverse.Size) { new[] { dxFi2, dyFi2, dzFi2 } };
+                    var currentCalculates = CalculateJacobian(ielem, p, _cachedVertices);
+                    _calculates.Enqueue(currentCalculates);
 
-                        return calculates.inverse * vector1 * (calculates.inverse * vector2) *
-                               Math.Abs(calculates.determinant);
-                    };
+                    var vector1 = new Vector<double>(currentCalculates.inverse.Size)
+                        { [0] = dxFi1, [1] = dyFi1, [2] = dzFi1 };
+                    var vector2 = new Vector<double>(currentCalculates.inverse.Size)
+                        { [0] = dxFi2, [1] = dyFi2, [2] = dzFi2 };
 
-                    _baseStiffnessMatrix![i, j] =
-                        _baseStiffnessMatrix[j, i] = Integrator.Gauss3D(function, templateElement);
+                    return currentCalculates.inverse * vector1 * (currentCalculates.inverse * vector2) *
+                           Math.Abs(currentCalculates.determinant);
+                };
 
-                    function = p =>
-                    {
-                        var fi1 = Basis.GetPsi(i1, p, _cachedVertices);
-                        var fi2 = Basis.GetPsi(j1, p, _cachedVertices);
-                        var calculates = CalculateJacobian(ielem, p, _cachedVertices);
+                _baseStiffnessMatrix[i, j] =
+                    _baseStiffnessMatrix[j, i] = Integrator.Gauss3D(function, templateElement);
 
-                        return fi1 * fi2 * Math.Abs(calculates.determinant);
-                    };
-                    _baseMassMatrix![i, j] = _baseMassMatrix[j, i] = Integrator.Gauss3D(function, templateElement);
-                }
-            }
-        }
+                function = p =>
+                {
+                    var fi1 = Basis.GetPsi(i1, p, _cachedVertices);
+                    var fi2 = Basis.GetPsi(j1, p, _cachedVertices);
+                    // var calculates = CalculateJacobian(ielem, p, _cachedVertices);
+                    var calculates = _calculates.Dequeue();
 
-        for (int i = 0; i < Basis.Size; i++)
-        {
-            for (int j = 0; j <= i; j++)
-            {
-                StiffnessMatrix[i, j] =
-                    StiffnessMatrix[j, i] =
-                        1.0 * _baseStiffnessMatrix![i, j] * determinant; // already ABS, $\lambda$ = 1.0
-            }
-        }
+                    return fi1 * fi2 * Math.Abs(calculates.determinant);
+                };
 
-        for (int i = 0; i < Basis.Size; i++)
-        {
-            for (int j = 0; j <= i; j++)
-            {
-                MassMatrix[i, j] = MassMatrix[j, i] = _baseMassMatrix![i, j] * determinant;
+                MassMatrix[i, j] = MassMatrix[j, i] = Integrator.Gauss3D(function, templateElement);
             }
         }
     }
@@ -171,14 +160,21 @@ public class SystemAssembler(IBasis3D basis, SphereMesh mesh, Integrator integra
             [0, 0] = (float)dx[0],
             [0, 1] = (float)dy[0],
             [0, 2] = (float)dz[0],
+            [0, 3] = 0.0f,
             [1, 0] = (float)dx[1],
             [1, 1] = (float)dy[1],
             [1, 2] = (float)dz[1],
+            [1, 3] = 0.0f,
             [2, 0] = (float)dx[2],
             [2, 1] = (float)dy[2],
-            [2, 2] = (float)dz[2]
+            [2, 2] = (float)dz[2],
+            [2, 3] = 0.0f,
+            [3, 0] = 0.0f,
+            [3, 1] = 0.0f,
+            [3, 2] = 0.0f,
+            [3, 3] = 1.0f
         }, out var inverse);
 
-        return (determinant, 1.0 / determinant * (Matrix<double>)inverse);
+        return (determinant, 1.0 / determinant * inverse.ToMatrix3<double>());
     }
 }

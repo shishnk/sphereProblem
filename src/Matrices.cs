@@ -196,6 +196,45 @@ public class Matrix<T>(int size) where T : INumber<T>, IRootFunctions<T>
         [3, 0] = T.CreateChecked(matrix.M41),
         [3, 1] = T.CreateChecked(matrix.M42),
         [3, 2] = T.CreateChecked(matrix.M43),
-        [3, 3] = T.CreateChecked(matrix.M44)
+        [3, 3] = T.CreateChecked(matrix.M44),
     };
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator Matrix4x4(Matrix<T> matrix) => new()
+    {
+        M11 = (float)Convert.ChangeType(matrix[0, 0], typeof(float)),
+        M12 = (float)Convert.ChangeType(matrix[0, 1], typeof(float)),
+        M13 = (float)Convert.ChangeType(matrix[0, 2], typeof(float)),
+        M14 = (float)Convert.ChangeType(matrix[0, 3], typeof(float)),
+        M21 = (float)Convert.ChangeType(matrix[1, 0], typeof(float)),
+        M22 = (float)Convert.ChangeType(matrix[1, 1], typeof(float)),
+        M23 = (float)Convert.ChangeType(matrix[1, 2], typeof(float)),
+        M24 = (float)Convert.ChangeType(matrix[1, 3], typeof(float)),
+        M31 = (float)Convert.ChangeType(matrix[2, 0], typeof(float)),
+        M32 = (float)Convert.ChangeType(matrix[2, 1], typeof(float)),
+        M33 = (float)Convert.ChangeType(matrix[2, 2], typeof(float)),
+        M34 = (float)Convert.ChangeType(matrix[2, 3], typeof(float)),
+        M41 = (float)Convert.ChangeType(matrix[3, 0], typeof(float)),
+        M42 = (float)Convert.ChangeType(matrix[3, 1], typeof(float)),
+        M43 = (float)Convert.ChangeType(matrix[3, 2], typeof(float)),
+        M44 = (float)Convert.ChangeType(matrix[3, 3], typeof(float))
+    };
+}
+
+public static class MatrixExtensions
+{
+    public static Matrix<T> ToMatrix3<T>(this Matrix4x4 matrix)
+        where T : INumber<T>, IRootFunctions<T> =>
+        new(3)
+        {
+            [0,0] = T.CreateChecked(matrix.M11),
+            [0,1] = T.CreateChecked(matrix.M12),
+            [0,2] = T.CreateChecked(matrix.M13),
+            [1,0] = T.CreateChecked(matrix.M21),
+            [1,1] = T.CreateChecked(matrix.M22),
+            [1,2] = T.CreateChecked(matrix.M23),
+            [2,0] = T.CreateChecked(matrix.M31),
+            [2,1] = T.CreateChecked(matrix.M32),
+            [2,2] = T.CreateChecked(matrix.M33)
+        };
 }
