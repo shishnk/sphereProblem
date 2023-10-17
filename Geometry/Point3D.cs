@@ -38,6 +38,14 @@ public readonly record struct Point3D(double X, double Y, double Z)
 {
     public override string ToString() => $"{X} {Y} {Z}";
 
+    public double this[int index] => index switch
+    {
+        0 => X,
+        1 => Y,
+        2 => Z,
+        _ => throw new ArgumentOutOfRangeException(nameof(index), index, "Invalid point index")
+    };
+
     public static bool TryParse(string line, out Point3D point)
     {
         var words = line.Split(new[] { ' ', ',', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);

@@ -23,4 +23,4 @@ public static class Quadratures
             yield return new((p1[i], p2[i], p3[i]), w[i] / 6.0);
         }
     }
-}
+}       

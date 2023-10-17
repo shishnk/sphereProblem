@@ -3,7 +3,7 @@ using SphereProblem.Geometry;
 
 namespace SphereProblem;
 
-public class Integrator
+public class Integrator(IEnumerable<QuadratureNode<Point3D>> quadratures)
 {
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     public double Gauss3D(Func<Point3D, double> function, Tetrahedron element)
