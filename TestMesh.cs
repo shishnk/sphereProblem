@@ -47,11 +47,9 @@ public class TestMeshBuilder(TestMeshParameters parameters)
 
     private void CreateElementsInternal()
     {
-        const int elementSize = 8;
-
         // breaks up into 6 tetrahedrons
         _elements = new FiniteElement[parameters.SplitsX * parameters.SplitsY * parameters.SplitsZ * 6];
-        Span<int> nodes = stackalloc int[elementSize];
+        Span<int> nodes = stackalloc int[ElementSize * 2];
 
         var nx = parameters.SplitsX + 1;
         var ny = parameters.SplitsY + 1;
@@ -71,21 +69,13 @@ public class TestMeshBuilder(TestMeshParameters parameters)
                     nodes[6] = i + (j + 1) * nx + (k + 1) * nx * ny;
                     nodes[7] = i + 1 + (j + 1) * nx + (k + 1) * nx * ny;
 
-                    // _elements[index++] = new(new[] { 0, 4, 5, 7 });
-                    // _elements[index++] = new(new[] { 0, 1, 5, 7 });
-                    // _elements[index++] = new(new[] { 0, 1, 3, 7 });
-                    //
-                    // _elements[index++] = new(new[] { 3, 4, 5, 6 });
-                    // _elements[index++] = new(new[] { 2, 3, 4, 6 });
-                    // _elements[index++] = new(new[] { 0, 2, 3, 4 });
-
-                    _elements[index++] = new(new[] { 0, 1, 2, 4 });
-                    _elements[index++] = new(new[] { 1, 2, 4, 5 });
-                    _elements[index++] = new(new[] { 1, 2, 3, 5 });
-
-                    _elements[index++] = new(new[] { 2, 3, 4, 6 });
-                    _elements[index++] = new(new[] { 1, 4, 5, 7 });
-                    _elements[index++] = new(new[] { 2, 4, 6, 7 });
+                    _elements[index++] = new(new[] { nodes[0], nodes[4], nodes[5], nodes[7] });
+                    _elements[index++] = new(new[] { nodes[0], nodes[1], nodes[5], nodes[7] });
+                    _elements[index++] = new(new[] { nodes[0], nodes[1], nodes[3], nodes[7] });
+                    
+                    _elements[index++] = new(new[] { nodes[3], nodes[6], nodes[7], nodes[4] });
+                    _elements[index++] = new(new[] { nodes[3], nodes[2], nodes[6], nodes[4] });
+                    _elements[index++] = new(new[] { nodes[3], nodes[2], nodes[0], nodes[4] });
                 }
             }
         }

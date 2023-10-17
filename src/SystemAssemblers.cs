@@ -7,7 +7,7 @@ namespace SphereProblem;
 public class SystemAssembler(IBasis3D basis, TestMesh mesh, Integrator integrator)
 {
     private readonly Matrix<double> _baseStiffnessMatrix = new(basis.Size);
-    private Point3D[] _cachedVertices = new Point3D[basis.Size]; // for tetrahedron
+    private readonly Point3D[] _cachedVertices = new Point3D[basis.Size]; // for tetrahedron
     private readonly Matrix<double> _jacobianMatrix = new(3);
     private readonly Tetrahedron _templateElement = Tetrahedron.TemplateElement;
     private readonly CalculateCollection<(double Determinant, Matrix<double> Inverse)> _calculateCache = new();
@@ -22,7 +22,6 @@ public class SystemAssembler(IBasis3D basis, TestMesh mesh, Integrator integrato
     public Matrix<double> StiffnessMatrix => _baseStiffnessMatrix.MultiplyByConstant(_lastLambda);
     public Matrix<double> MassMatrix { get; } = new(basis.Size);
     public Vector<double> Vector { get; } = new(mesh.Points.Count);
-
     public SparseMatrix? GlobalMatrix { get; set; }
 
     public void FillGlobalMatrix(int i, int j, double value)
@@ -53,17 +52,15 @@ public class SystemAssembler(IBasis3D basis, TestMesh mesh, Integrator integrato
     {
         var selectedElement = mesh.Elements[ielem];
 
-        // _cachedVertices[0] = Mesh.Points[selectedElement[0]];
-        // _cachedVertices[1] = Mesh.Points[selectedElement[1]];
-        // _cachedVertices[2] = Mesh.Points[selectedElement[2]];
-        // _cachedVertices[3] = Mesh.Points[selectedElement[3]];
-
-        _cachedVertices = _templateElement.Vertices;
+        _cachedVertices[0] = mesh.Points[selectedElement[0]];
+        _cachedVertices[1] = mesh.Points[selectedElement[1]];
+        _cachedVertices[2] = mesh.Points[selectedElement[2]];
+        _cachedVertices[3] = mesh.Points[selectedElement[3]];
 
         _lastLambda = 1.0; // TODO
         _isEnough = false;
-        var enumerator = _calculateCache.GetEnumerator();
 
+        var enumerator = _calculateCache.GetEnumerator();
         Basis.UpdateCache(_cachedVertices);
         _calculateCache.Clear();
 
@@ -104,6 +101,7 @@ public class SystemAssembler(IBasis3D basis, TestMesh mesh, Integrator integrato
                     _vector2[1] = dyFi2;
                     _vector2[2] = dzFi2;
 
+                    // add methods and cache as Span and ReadOnlySpan
                     return currentCalculates.Inverse * _vector1 * (currentCalculates.Inverse * _vector2) *
                            Math.Abs(currentCalculates.Determinant);
                 };
@@ -136,7 +134,7 @@ public class SystemAssembler(IBasis3D basis, TestMesh mesh, Integrator integrato
             for (int j = 0; j < Basis.Size; j++)
             {
                 Vector[mesh.Elements[ielem][i]] +=
-                    MassMatrix[i, j] * source(Mesh.Points[Mesh.Elements[ielem][j]]);
+                    MassMatrix[i, j] * source(mesh.Points[Mesh.Elements[ielem][j]]);
             }
         }
     }
@@ -155,9 +153,9 @@ public class SystemAssembler(IBasis3D basis, TestMesh mesh, Integrator integrato
         {
             for (int k = 0; k < varCount; k++)
             {
-                dx[k] += Basis.GetDPsi(i, k) * Mesh.Points[element[i]].X;
-                dy[k] += Basis.GetDPsi(i, k) * Mesh.Points[element[i]].Y;
-                dz[k] += Basis.GetDPsi(i, k) * Mesh.Points[element[i]].Z;
+                dx[k] += Basis.GetDPsi(i, k) * mesh.Points[element[i]].X;
+                dy[k] += Basis.GetDPsi(i, k) * mesh.Points[element[i]].Y;
+                dz[k] += Basis.GetDPsi(i, k) * mesh.Points[element[i]].Z;
             }
         }
 
@@ -176,7 +174,7 @@ public class SystemAssembler(IBasis3D basis, TestMesh mesh, Integrator integrato
 
         _jacobianMatrix.Invert3X3();
 
-        return (determinant, _jacobianMatrix.MultiplyByConstant(1.0 / determinant));
+        return (determinant, _jacobianMatrix);
     }
 
     // private double CalculateDeterminant() // not used

@@ -16,8 +16,8 @@ public class FemSolver
 
         public FemSolverBuilder SetTest((string FieldExpr, string SourceExpr) test)
         {
-            _solverFem._f = ExpressionCompiler.CompileToLambda(test.FieldExpr);
-            _solverFem._u = ExpressionCompiler.CompileToLambda(test.SourceExpr);
+            _solverFem._u = ExpressionCompiler.CompileToLambda(test.FieldExpr);
+            _solverFem._f = ExpressionCompiler.CompileToLambda(test.SourceExpr);
             return this;
         }
 
@@ -80,16 +80,17 @@ public class FemSolver
 
     private void AccountingDirichletBoundary()
     {
-        // int[] checkBc = new int[_mesh.Points.Count];
-        //
-        // checkBc.Fill(-1);
-        // // var boundariesArray = _boundaries.ToArray();
-        //
-        // for (int i = 0; i < boundariesArray.Length; i++)
-        // {
-        //     checkBc[boundariesArray[i].Node] = i;
-        //     boundariesArray[i].Value = _test.U(_mesh.Points[boundariesArray[i].Node]);
-        // }
+        Span<int> checkBc = stackalloc int[_assembler.Mesh.Points.Count];
+        checkBc.Fill(-1);
+        var boundariesArray = Enumerable.Range(0, 27).Select(i => (Node: i, Value: _u(_assembler.Mesh.Points[i])))
+            .Where(i => i.Node != 13)
+            .ToArray();
+
+        for (int i = 0; i < boundariesArray.Length; i++)
+        {
+            checkBc[boundariesArray[i].Node] = i;
+            // boundariesArray[i].Value = _test.U(_mesh.Points[boundariesArray[i].Node]);
+        }
 
         // for (int i = 0, k = boundariesArray.Length - 1;
         //      i < boundariesArray.Length / 2;
@@ -99,37 +100,37 @@ public class FemSolver
         //     boundariesArray[k].Value = 0.0;
         // }
 
-        // for (int i = 0; i < _testMesh.Points.Count; i++)
-        // {
-        //     int index;
-        //     if (checkBc[i] != -1)
-        //     {
-        //         _assembler.GlobalMatrix!.Di[i] = 1.0;
-        //         _assembler.Vector[i] = boundariesArray[checkBc[i]].Value;
-        //
-        //         for (int k = _assembler.GlobalMatrix.Ig[i]; k < _assembler.GlobalMatrix.Ig[i + 1]; k++)
-        //         {
-        //             index = _assembler.GlobalMatrix.Jg[k];
-        //
-        //             if (checkBc[index] == -1)
-        //             {
-        //                 _assembler.Vector[index] -= _assembler.GlobalMatrix.Gg[k] * _assembler.Vector[i];
-        //             }
-        //
-        //             _assembler.GlobalMatrix.Gg[k] = 0.0;
-        //         }
-        //     }
-        //     else
-        //     {
-        //         for (int k = _assembler.GlobalMatrix!.Ig[i]; k < _assembler.GlobalMatrix.Ig[i + 1]; k++)
-        //         {
-        //             index = _assembler.GlobalMatrix.Jg[k];
-        //
-        //             if (checkBc[index] == -1) continue;
-        //             _assembler.Vector[i] -= _assembler.GlobalMatrix.Gg[k] * _assembler.Vector[index];
-        //             _assembler.GlobalMatrix.Gg[k] = 0.0;
-        //         }
-        //     }
-        // }
+        for (int i = 0; i < _assembler.Mesh.Points.Count; i++)
+        {
+            int index;
+            if (checkBc[i] != -1)
+            {
+                _assembler.GlobalMatrix!.Di[i] = 1.0;
+                _assembler.Vector[i] = boundariesArray[checkBc[i]].Value;
+
+                for (int k = _assembler.GlobalMatrix.Ig[i]; k < _assembler.GlobalMatrix.Ig[i + 1]; k++)
+                {
+                    index = _assembler.GlobalMatrix.Jg[k];
+
+                    if (checkBc[index] == -1)
+                    {
+                        _assembler.Vector[index] -= _assembler.GlobalMatrix.Gg[k] * _assembler.Vector[i];
+                    }
+
+                    _assembler.GlobalMatrix.Gg[k] = 0.0;
+                }
+            }
+            else
+            {
+                for (int k = _assembler.GlobalMatrix!.Ig[i]; k < _assembler.GlobalMatrix.Ig[i + 1]; k++)
+                {
+                    index = _assembler.GlobalMatrix.Jg[k];
+
+                    if (checkBc[index] == -1) continue;
+                    _assembler.Vector[i] -= _assembler.GlobalMatrix.Gg[k] * _assembler.Vector[index];
+                    _assembler.GlobalMatrix.Gg[k] = 0.0;
+                }
+            }
+        }
     }
 }

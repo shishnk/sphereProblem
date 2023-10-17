@@ -11,32 +11,23 @@ public static class PortraitBuilder
             connectivityList.Add(new());
         }
 
-        foreach (var element in mesh.Elements)
+        int localSize = mesh.Elements[0].Nodes.Count;
+        
+        
+        // TODO: fix
+        foreach (var element in mesh.Elements.Select(element => element.Nodes.OrderBy(node => node).ToArray()))
         {
-            foreach (var node in element.Nodes)
+            for (int i = 0; i < localSize - 1; i++)
             {
-                var connectivitySet = connectivityList[node];
+                int nodeToInsert = element[i];
 
-                foreach (var otherNode in element.Nodes)
+                for (int j = i + 1; j < localSize; j++)
                 {
-                    if (otherNode > node)
-                    {
-                        connectivitySet.Add(otherNode);
-                    }
+                    int posToInsert = element[j];
+
+                    connectivityList[posToInsert].Add(nodeToInsert);
                 }
             }
-
-            // for (int i = 0; i < localSize - 1; i++)
-            // {
-            //     int nodeToInsert = element[i];
-            //
-            //     for (int j = i + 1; j < localSize; j++)
-            //     {
-            //         int posToInsert = element[j];
-            //
-            //         connectivityList[posToInsert].Add(nodeToInsert);
-            //     }
-            // }
         }
 
         var orderedList = connectivityList.Select(list => list.OrderBy(val => val)).ToList();
@@ -55,9 +46,9 @@ public static class PortraitBuilder
 
         for (int i = 1, j = 0; i < connectivityList.Count; i++)
         {
-            foreach (var value in orderedList[i])
+            foreach (var it in orderedList[i])
             {
-                jg[j++] = value;
+                jg[j++] = it;
             }
         }
     }
