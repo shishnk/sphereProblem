@@ -59,7 +59,7 @@ public static class DoubleMatrixExtensions
 
     public static void Invert3X3(this Matrix<double> matrix)
     {
-        const double epsilon = 1e-10;
+        const double epsilon = 1e-16;
 
         if (matrix.Size != 3) throw new ArgumentException("Matrix size must be 3x3.", nameof(matrix));
 
@@ -91,18 +91,5 @@ public static class DoubleMatrixExtensions
         matrix[2, 0] = (m21 * m32 - m22 * m31) * invDet;
         matrix[2, 1] = -(m11 * m32 - m12 * m31) * invDet;
         matrix[2, 2] = (m11 * m22 - m12 * m21) * invDet;
-    }
-
-    public static Matrix<double> MultiplyByConstant(this Matrix<double> matrix, double value)
-    {
-        for (int i = 0; i < matrix.Size; i++)
-        {
-            for (int j = 0; j < matrix.Size; j++)
-            {
-                matrix[i, j] *= value;
-            }
-        }
-
-        return matrix;
     }
 }

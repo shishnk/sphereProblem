@@ -15,6 +15,40 @@ public class Vector<T>(int length) : IEnumerable<T>
         get => _storage[idx];
         set => _storage[idx] = value;
     }
+    
+    public void Fill(T value)
+    {
+        for (int i = 0; i < Length; i++)
+        {
+            _storage[i] = T.CreateChecked(value);
+        }
+    }
+
+    public Span<T> AsSpan(Range range) => _storage.AsSpan(range);
+
+    public T Norm() => T.Sqrt(_storage.Aggregate(T.Zero, (current, t) => current + t * t));
+
+    public ImmutableArray<T> ToImmutableArray()
+        => ImmutableArray.Create(_storage);
+
+    public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>)_storage).GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public void Add(IEnumerable<T> collection)
+    {
+        var enumerable = collection as T[] ?? collection.ToArray();
+
+        if (Length != enumerable.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(collection), "Sizes of vector and collection not equal");
+        }
+
+        for (int i = 0; i < Length; i++)
+        {
+            _storage[i] = enumerable[i];
+        }
+    }
 
     public static T operator *(Vector<T> a, Vector<T> b)
     {
@@ -79,37 +113,5 @@ public class Vector<T>(int length) : IEnumerable<T>
         Array.Copy(otherVector._storage, newVector._storage, otherVector.Length);
 
         return newVector;
-    }
-
-    public void Fill(T value)
-    {
-        for (int i = 0; i < Length; i++)
-        {
-            _storage[i] = T.CreateChecked(value);
-        }
-    }
-
-    public T Norm() => T.Sqrt(_storage.Aggregate(T.Zero, (current, t) => current + t * t));
-
-    public ImmutableArray<T> ToImmutableArray()
-        => ImmutableArray.Create(_storage);
-
-    public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>)_storage).GetEnumerator();
-
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-    public void Add(IEnumerable<T> collection)
-    {
-        var enumerable = collection as T[] ?? collection.ToArray();
-
-        if (Length != enumerable.Length)
-        {
-            throw new ArgumentOutOfRangeException(nameof(collection), "Sizes of vector and collection not equal");
-        }
-
-        for (int i = 0; i < Length; i++)
-        {
-            _storage[i] = enumerable[i];
-        }
     }
 }

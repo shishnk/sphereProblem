@@ -46,6 +46,12 @@ public class FemSolver
 
         _iterativeSolver.SetMatrixEx(_assembler.GlobalMatrix!).SetVectorEx(_assembler.Vector);
         _iterativeSolver.Compute();
+
+        for (int i = 0; i < _iterativeSolver.Solution!.Value.Length; i++)
+        {
+            Console.WriteLine(
+                $"Point {_assembler.Mesh.Points[i]} -- {_iterativeSolver.Solution.Value[i]}, exact -- {_u(_assembler.Mesh.Points[i])}");
+        }
     }
 
     private void EnsureInitialization()
@@ -103,6 +109,7 @@ public class FemSolver
         for (int i = 0; i < _assembler.Mesh.Points.Count; i++)
         {
             int index;
+
             if (checkBc[i] != -1)
             {
                 _assembler.GlobalMatrix!.Di[i] = 1.0;
@@ -127,6 +134,7 @@ public class FemSolver
                     index = _assembler.GlobalMatrix.Jg[k];
 
                     if (checkBc[index] == -1) continue;
+                    
                     _assembler.Vector[i] -= _assembler.GlobalMatrix.Gg[k] * _assembler.Vector[index];
                     _assembler.GlobalMatrix.Gg[k] = 0.0;
                 }

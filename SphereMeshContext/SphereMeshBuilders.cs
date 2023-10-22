@@ -101,7 +101,7 @@ public class Quadratic2DBaseSphereMeshBuilder(SphereMeshParameters parameters) :
         {
             for (int i = 0; i < parameters.ThetaSplits - 1; i++, idx += 2)
             {
-                for (int k = 0; k < ElementSize + localSize; k++)
+                for (int k = 0; k < nodes.Length; k++)
                 {
                     var lx = k % localSize;
                     var ly = k / localSize;
