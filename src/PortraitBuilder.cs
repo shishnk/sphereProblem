@@ -13,16 +13,17 @@ public static class PortraitBuilder
 
         int localSize = mesh.Elements[0].Nodes.Count;
         
-        // TODO: fix
-        foreach (var element in mesh.Elements.Select(element => element.Nodes.OrderBy(node => node).ToArray()))
+        foreach (var element in mesh.Elements)
         {
-            for (int i = 0; i < localSize - 1; i++)
+            for (int i = 0; i < localSize; i++)
             {
-                int nodeToInsert = element[i];
+                int posToInsert = element[i];
 
-                for (int j = i + 1; j < localSize; j++)
+                for (int j = 0; j < localSize; j++)
                 {
-                    int posToInsert = element[j];
+                    int nodeToInsert = element[j];
+                    
+                    if (posToInsert <= nodeToInsert) continue;
 
                     connectivityList[posToInsert].Add(nodeToInsert);
                 }

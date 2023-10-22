@@ -1,10 +1,10 @@
 ﻿using SphereProblem;
 
 var mesh = new TestMeshBuilder(new(
-        new(0.0, 1.0), 1, 
-        new(0.0, 1.0), 1, 
-        new(0.0, 1.0), 1, 
-        isQuadratic:true))
+        new(0.0, 1.0), 1,
+        new(0.0, 1.0), 1,
+        new(0.0, 1.0), 1,
+        isQuadratic: true))
     .BuildTestMesh();
 FemSolver femSolver = FemSolver.CreateBuilder()
     .SetTest(("point.X + point.Y + point.Z", "0.0"))
