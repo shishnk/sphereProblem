@@ -1,4 +1,5 @@
-﻿using SphereProblem.Geometry;
+﻿using SphereProblem.DirichletBoundariesContext;
+using SphereProblem.Geometry;
 
 namespace SphereProblem;
 
@@ -27,6 +28,12 @@ public class FemSolver
             return this;
         }
 
+        public FemSolverBuilder SetDirichletBoundaries(IEnumerable<DirichletBoundary> boundaries)
+        {
+            _solverFem._boundaries = boundaries;
+            return this;
+        }
+
         public static implicit operator FemSolver(FemSolverBuilder builder)
             => builder._solverFem;
     }
@@ -35,6 +42,7 @@ public class FemSolver
     private SystemAssembler _assembler = null!;
     private Func<Point3D, double> _f = null!;
     private Func<Point3D, double> _u = null!;
+    private IEnumerable<DirichletBoundary> _boundaries = null!;
 
     public static FemSolverBuilder CreateBuilder() => new();
 
@@ -88,14 +96,17 @@ public class FemSolver
     {
         Span<int> checkBc = stackalloc int[_assembler.Mesh.Points.Count];
         checkBc.Fill(-1);
-        var boundariesArray = Enumerable.Range(0, 27).Select(i => (Node: i, Value: _u(_assembler.Mesh.Points[i])))
-            .Where(i => i.Node != 13)
-            .ToArray();
+        // var boundariesArray = Enumerable.Range(0, _assembler.Mesh.Points.Count).Select(i => (Node: i, Value: _u(_assembler.Mesh.Points[i])))
+        //     .Where(i => i.Node != 13)
+        //     .ToArray();
 
+        var boundariesArray = _boundaries.ToArray();
+      
+        
         for (int i = 0; i < boundariesArray.Length; i++)
         {
             checkBc[boundariesArray[i].Node] = i;
-            // boundariesArray[i].Value = _test.U(_mesh.Points[boundariesArray[i].Node]);
+            boundariesArray[i].Value = _u(_assembler.Mesh.Points[boundariesArray[i].Node]);
         }
 
         // for (int i = 0, k = boundariesArray.Length - 1;

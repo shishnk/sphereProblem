@@ -5,7 +5,7 @@ namespace SphereProblem;
 public static class DenseSolver
 {
     public static Vector<T> Solve<T>(Matrix<T> matrix, Vector<T> f)
-        where T : INumber<T>, IRootFunctions<T>
+        where T : struct, INumber<T>, IRootFunctions<T>
     {
         Vector<T> x = new(f.Length);
         Vector<T>.Copy(f, x);

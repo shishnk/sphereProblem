@@ -10,7 +10,7 @@ public class Integrator(IEnumerable<QuadratureNode<Point3D>> quadratures)
     {
         var quadratures = Quadratures.TetrahedronOrder4();
         var vertices = element.Vertices;
-        // var determinant = CalculateDeterminant();
+        // var determinant = Math.Abs(CalculateDeterminant());
         var determinant = 1.0;
 
         return (from q in quadratures

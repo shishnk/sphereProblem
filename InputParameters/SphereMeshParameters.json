@@ -4,7 +4,11 @@
     0,
     0
   ],
-  "Radius": 1.0,
-  "Theta splits": 10,
-  "Phi splits": 10
+  "Radius": [
+    5,
+    10,
+    15
+  ],
+  "Theta splits": 5,
+  "Phi splits": 5
 }

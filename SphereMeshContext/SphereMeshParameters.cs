@@ -1,16 +1,15 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using SphereProblem.Geometry;
 
 namespace SphereProblem.SphereMeshContext;
 
-public readonly record struct SphereMeshParameters(
-    [property: JsonProperty(Required = Required.Always)]
-    Point3D Center,
-    [property: JsonProperty(Required = Required.Always)]
-    double Radius,
-    [property: JsonProperty("Theta splits", Required = Required.Always)]
+public record SphereMeshParameters(
+    [property: JsonRequired] Point3D Center,
+    [property: JsonRequired] IReadOnlyList<double> Radius,
+    [property: JsonPropertyName("Theta splits"), JsonRequired]
     int ThetaSplits,
-    [property: JsonProperty("Phi splits", Required = Required.Always)]
+    [property: JsonPropertyName("Phi splits"), JsonRequired]
     int PhiSplits)
 {
     public static SphereMeshParameters ReadFromJsonFile(string jsonPath)
@@ -19,7 +18,7 @@ public readonly record struct SphereMeshParameters(
 
         using var sr = new StreamReader(jsonPath);
 
-        return JsonConvert.DeserializeObject<SphereMeshParameters?>(sr.ReadToEnd()) ??
-               throw new JsonSerializationException("Bad sphere mesh parameters");
+        return JsonSerializer.Deserialize<SphereMeshParameters?>(sr.ReadToEnd()) ??
+               throw new JsonException("Bad sphere mesh parameters");
     }
 }

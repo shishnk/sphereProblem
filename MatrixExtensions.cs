@@ -72,8 +72,8 @@ public static class DoubleMatrixExtensions
         var m31 = matrix[2, 0];
         var m32 = matrix[2, 1];
         var m33 = matrix[2, 2];
-        
-        var determinant = m11 * (m22 * m33 - m23 * m32) - m12 * (m21 * m33 - m23 * m31) + m13 * (m21 * m32 - m22 * m31);
+
+        var determinant = matrix.Determinant;
 
         if (Math.Abs(determinant) < epsilon)
         {

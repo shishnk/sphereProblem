@@ -1,10 +1,11 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using SphereProblem.Geometry;
+using SphereProblem.SphereMeshContext;
 
 namespace SphereProblem;
 
-public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integrator)
+public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator integrator)
 {
     /// <summary>
     ///  Cache contains data for assembler and help methods.
@@ -36,7 +37,7 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
 
     private readonly AssemblerCache _cache = new();
     private readonly Matrix<double> _baseStiffnessMatrix = new(basis.Size);
-    private readonly Point3D[] _cachedVertices = new Point3D[basis.Size]; // for tetrahedron
+    private readonly Point3D[] _cachedVertices = new Point3D[4]; // for tetrahedron
     private readonly Tetrahedron _templateElement = Tetrahedron.TemplateElement;
 
     /// <summary>
@@ -46,7 +47,7 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
     private bool _isEnough;
 
     public BaseBasis3D Basis => basis;
-    public TestMesh Mesh => mesh;
+    public SphereMesh Mesh => mesh;
     public Matrix<double> StiffnessMatrix => _baseStiffnessMatrix;
 
     private Matrix<double> MassMatrix { get; } = new(basis.Size);
@@ -95,6 +96,13 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
         // for (int i = 0; i < 10; i++)
         // {
         //     Console.WriteLine($"Value at node {i}: {basis.GetPsi(i, mesh.Points[selectedElement[i]])}");
+        //
+        //     for (int j = 0; j < 10; j++)
+        //     {
+        //         if (i == j) continue;
+        //         
+        //         Console.WriteLine($"Value at node {j}: {basis.GetPsi(i, mesh.Points[selectedElement[j]])}");
+        //     }
         // }
         //
         // Console.WriteLine();
@@ -119,8 +127,9 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
 
                     if (!_isEnough)
                     {
-                        currentCalculates = CalculateJacobian(ielem, p);
-                        _cache.CalculateCache.Add(currentCalculates);
+                        CalculateJacobian(ielem, p);
+                        _cache.CalculateCache.Add((_cache.JacobianMatrix.Determinant, (Matrix<double>)_cache.JacobianMatrix.Clone()));
+                        currentCalculates = (_cache.JacobianMatrix.Determinant, _cache.JacobianMatrix);
                     }
                     else
                     {
@@ -150,10 +159,10 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
                 {
                     var fi1 = Basis.GetPsi(i1, p);
                     var fi2 = Basis.GetPsi(j1, p);
-                    var calculates = enumerator.Current;
+                    var currentCalculates = enumerator.Current;
                     enumerator.MoveNext();
 
-                    return fi1 * fi2 * Math.Abs(calculates.Determinant);
+                    return fi1 * fi2 * Math.Abs(currentCalculates.Determinant);
                 };
 
                 MassMatrix[i, j] = MassMatrix[j, i] = integrator.Gauss3D(function, _templateElement);
@@ -174,7 +183,7 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
         }
     }
 
-    private (double Determinant, Matrix<double> Inverse) CalculateJacobian(int ielem, Point3D point)
+    private void CalculateJacobian(int ielem, Point3D point)
     {
         const int varCount = 3;
 
@@ -194,9 +203,6 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
             }
         }
 
-        var determinant = dx[0] * dy[1] * dz[2] + (dx[1] * dy[2] * dz[0] + dy[0] * dz[1] * dx[2]) -
-                          (dz[0] * dy[1] * dx[2] + dx[0] * dy[2] * dz[1] + dy[2] * dz[1] * dx[0]);
-
         _cache.JacobianMatrix[0, 0] = dx[0];
         _cache.JacobianMatrix[0, 1] = dy[0];
         _cache.JacobianMatrix[0, 2] = dz[0];
@@ -206,13 +212,11 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
         _cache.JacobianMatrix[2, 0] = dx[2];
         _cache.JacobianMatrix[2, 1] = dy[2];
         _cache.JacobianMatrix[2, 2] = dz[2];
-
+ 
         _cache.JacobianMatrix.Invert3X3();
         _cache.DerivativeVector.Fill(0.0);
-
-        return (determinant, _cache.JacobianMatrix);
     }
-
+    
     // private double CalculateDeterminant() // not used
     // {
     //     var x0 = _cachedVertices[0].X;
@@ -251,17 +255,17 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
         public void Clear() => _list.Clear();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
+    }  
 
     private class CalculateEnumerator<T>(IReadOnlyList<T> list) : IEnumerator<T> where T : struct
     {
         private int _index;
+        
+        public T Current => list[_index];
 
         public bool MoveNext() => ++_index < list.Count;
 
         public void Reset() => _index = 0;
-
-        public T Current => list[_index];
 
         object IEnumerator.Current => Current;
 

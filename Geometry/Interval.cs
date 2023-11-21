@@ -1,39 +1,73 @@
 ﻿using System.Globalization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace SphereProblem.Geometry;
 
-public class IntervalJsonConverter : JsonConverter
+public class IntervalJsonConverter : JsonConverter<Interval>
 {
-    public override bool CanConvert(Type objectType) => typeof(Interval) == objectType;
-
-    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue,
-        JsonSerializer serializer)
+    public override Interval Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonToken.StartArray)
+        // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+        switch (reader.TokenType)
         {
-            var array = JArray.Load(reader);
-            if (array.Count == 2) return new Interval(array[0].Value<double>(), array[1].Value<double>());
-            throw new FormatException($"Wrong vector length({array.Count})!");
+            case JsonTokenType.StartArray:
+            {
+                // // 1 method
+                // var array = JsonSerializer.Deserialize<double[]>(ref reader, options)!;
+                //
+                // if (array.Length != 2) throw new JsonException($"Wrong interval length({array.Length})!");
+                // return new(array[0], array[1]);
+
+                // 2 method
+                var array = JsonNode.Parse(ref reader)?.AsArray() ??
+                            throw new JsonException("Can't parse interval!");
+
+                if (array.Count == 2)
+                {
+                    return new(array[0]!.GetValue<double>(), array[1]!.GetValue<double>());
+                }
+
+                throw new JsonException($"Wrong interval length({array.Count})!");
+            }
+            case JsonTokenType.String:
+            {
+                var line = reader.GetString();
+                if (Interval.TryParse(line ?? string.Empty, out var interval)) return interval;
+                break;
+            }
+            case JsonTokenType.StartObject:
+            {
+                while (reader.Read())
+                {
+                    if (reader.TokenType != JsonTokenType.String) continue;
+                    var line = reader.GetString();
+                    if (!Interval.TryParse(line ?? string.Empty, out var interval)) continue;
+                    reader.Read(); // for getting EndObject
+                    return interval;
+                }
+
+                break;
+            }
+            default:
+                throw new NotSupportedException();
         }
 
-        if (Interval.TryParse((string?)reader.Value ?? "", out var interval)) return interval;
-        throw new FormatException($"Can't parse({(string?)reader.Value}) as Interval!");
+        throw new FormatException("Can't parse as Vector3D!");
     }
 
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+    public override void Write(Utf8JsonWriter writer, Interval value, JsonSerializerOptions options)
     {
-        value ??= new Interval();
-        var interval = (Interval)value;
-        writer.WriteRawValue($"\"[{interval.LeftBorder}, {interval.RightBorder}]\"");
+        writer.WriteRawValue($"[{value.LeftBorder}, {value.RightBorder}]");
+        // JsonSerializer.Serialize(writer, new[] { value.X, value.Y, value.Z }, options);
     }
 }
 
 [JsonConverter(typeof(IntervalJsonConverter))]
 [method: JsonConstructor]
-public readonly record struct Interval([property: JsonProperty("Left border")]
-    double LeftBorder, [property: JsonProperty("Right border")]
+public readonly record struct Interval([property: JsonPropertyName("Left border")]
+    double LeftBorder, [property: JsonPropertyName("Right border")]
     double RightBorder)
 {
     [JsonIgnore] public double Length { get; } = Math.Abs(RightBorder - LeftBorder);

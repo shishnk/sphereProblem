@@ -1,8 +1,10 @@
-﻿namespace SphereProblem;
+﻿using SphereProblem.SphereMeshContext;
+
+namespace SphereProblem;
 
 public static class PortraitBuilder
 {
-    public static void Build(TestMesh mesh, out int[] ig, out int[] jg)
+    public static void Build(SphereMesh mesh, out int[] ig, out int[] jg)
     {
         var connectivityList = new List<HashSet<int>>();
 

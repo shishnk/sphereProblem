@@ -51,7 +51,7 @@ public abstract class BaseBasis3D
 
 public class LinearBasis3D : BaseBasis3D // tetrahedrons
 {
-    // private readonly Matrix<double> _alphasMatrix = Matrix<double>.Identity(4);
+    // private readonly Matrix<double> _alph asMatrix = Matrix<double>.Identity(4);
 
     public override int Size => 4;
 
