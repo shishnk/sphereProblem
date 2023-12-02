@@ -75,12 +75,12 @@ public static class DoubleMatrixExtensions
 
         var determinant = matrix.Determinant;
 
-        if (Math.Abs(determinant) < epsilon)
+        if (Math.Abs(determinant!.Value) < epsilon)
         {
             throw new InvalidOperationException("Matrix is not invertible.");
         }
 
-        var invDet = 1.0 / determinant;
+        var invDet = 1.0 / determinant.Value;
 
         matrix[0, 0] = (m22 * m33 - m23 * m32) * invDet;
         matrix[0, 1] = -(m12 * m33 - m13 * m32) * invDet;

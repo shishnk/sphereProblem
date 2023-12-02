@@ -5,6 +5,8 @@ VisualStudioVersion = 17.7.34024.191
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SphereProblem", "SphereProblem.csproj", "{F1913274-F3CF-4213-8D0C-82735C177147}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "..\Tests\TestProject\TestProject.csproj", "{481BBAD7-32BA-4529-8DE8-E2262172E6BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{F1913274-F3CF-4213-8D0C-82735C177147}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1913274-F3CF-4213-8D0C-82735C177147}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1913274-F3CF-4213-8D0C-82735C177147}.Release|Any CPU.Build.0 = Release|Any CPU
+		{481BBAD7-32BA-4529-8DE8-E2262172E6BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{481BBAD7-32BA-4529-8DE8-E2262172E6BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{481BBAD7-32BA-4529-8DE8-E2262172E6BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{481BBAD7-32BA-4529-8DE8-E2262172E6BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

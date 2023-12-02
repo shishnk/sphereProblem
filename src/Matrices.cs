@@ -28,6 +28,8 @@ public class SparseMatrix(int size, int sizeOffDiag)
 
         return product;
     }
+    
+    
 
     public void PrintDense(string path)
     {
@@ -79,10 +81,11 @@ public class Matrix<T>(int size) : ICloneable where T : struct, INumber<T>, IRoo
     public int Size { get; } = size;
     public bool IsDecomposed { get; private set; }
 
-    public T Determinant
+    public T? Determinant
     {
         get
         {
+            if (size != 3) return null;
             if (_determinant != null) return _determinant.Value;
 
             var m11 = this[0, 0];

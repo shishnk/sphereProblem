@@ -1,14 +1,11 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using SphereProblem.Geometry;
+﻿using SphereProblem.Geometry;
 
 namespace SphereProblem;
 
 public class Integrator(IEnumerable<QuadratureNode<Point3D>> quadratures)
 {
-    [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     public double Gauss3D(Func<Point3D, double> function, Tetrahedron element)
     {
-        var quadratures = Quadratures.TetrahedronOrder4();
         var vertices = element.Vertices;
         // var determinant = Math.Abs(CalculateDeterminant());
         var determinant = 1.0;

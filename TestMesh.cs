@@ -140,7 +140,7 @@ public class TestMeshBuilder(TestMeshParameters parameters)
                         nodes[0], nodes[18], nodes[2], nodes[6],
                         nodes[9], nodes[1], nodes[3], nodes[10], nodes[12], nodes[4]
                     });
-      
+                    
                     _elements[idx++] = new(new[]
                     {
                         // 18, 24, 6, 2
@@ -159,6 +159,7 @@ public class TestMeshBuilder(TestMeshParameters parameters)
                         nodes[2], nodes[6], nodes[8], nodes[24],
                         nodes[4], nodes[5], nodes[13], nodes[7], nodes[15], nodes[16]
                     });
+                
                     
                     // breaks up into 5 tetrahedrons
                     // _elements[idx++] = new(new[]
