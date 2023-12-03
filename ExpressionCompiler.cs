@@ -6,10 +6,10 @@ namespace SphereProblem;
 
 public static class ExpressionCompiler
 {
-    private static readonly ScriptOptions _options;
+    private static readonly ScriptOptions s_options;
 
-    static ExpressionCompiler() => _options = ScriptOptions.Default.AddReferences(typeof(Point3D).Assembly);
+    static ExpressionCompiler() => s_options = ScriptOptions.Default.AddReferences(typeof(Point3D).Assembly);
 
     public static Func<Point3D, double> CompileToLambda(string expression) =>
-        CSharpScript.EvaluateAsync<Func<Point3D, double>>("point => " + expression, _options).Result;
+        CSharpScript.EvaluateAsync<Func<Point3D, double>>("point => " + expression, s_options).Result;
 }

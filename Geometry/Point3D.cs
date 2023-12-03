@@ -72,7 +72,7 @@ public readonly record struct Point3D(double X, double Y, double Z)
         return true;
     }
 
-    public override string ToString() => $"{X} {Y} {Z}";
+    public override string ToString() => $"{X:F2} {Y:F2} {Z:F2}";
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Point3D operator +(Point3D a, Point3D b) => new(a.X + b.X, a.Y + b.Y, a.Z + b.Z);

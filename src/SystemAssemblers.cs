@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using SphereProblem.Geometry;
+using SphereProblem.SphereMeshContext;
 
 namespace SphereProblem;
 
-public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integrator)
+public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator integrator)
 {
     /// <summary>
     ///  Cache contains data for assembler and help methods.
@@ -44,9 +45,8 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
     private readonly Vector<double> _doubleVector = new(6);
 
     public BaseBasis3D Basis => basis;
-    public TestMesh Mesh => mesh;
+    public SphereMesh Mesh => mesh;
     public Matrix<double> StiffnessMatrix => _baseStiffnessMatrix;
-
     private Matrix<double> MassMatrix { get; } = new(basis.Size);
     public Vector<double> Vector { get; } = new(mesh.Points.Count);
     public SparseMatrix? GlobalMatrix { get; set; }
@@ -86,7 +86,7 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
 
         Basis.UpdateCache(_cachedVertices);
         _cache.CalculateCache.Clear();
-
+        
         for (int i = 0; i < Basis.Size; i++)
         {
             for (int j = 0; j <= i; j++)
@@ -189,6 +189,16 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
         _cache.JacobianMatrix[2, 1] = dy[2];
         _cache.JacobianMatrix[2, 2] = dz[2];
 
+        
+        _cache.JacobianMatrix[0, 0] = 1;
+        _cache.JacobianMatrix[0, 1] = 2;
+        _cache.JacobianMatrix[0, 2] = 3;
+        _cache.JacobianMatrix[1, 0] = 4;
+        _cache.JacobianMatrix[1, 1] = 5;
+        _cache.JacobianMatrix[1, 2] = 6;
+        _cache.JacobianMatrix[2, 0] = 7;
+        _cache.JacobianMatrix[2, 1] = 8;
+        _cache.JacobianMatrix[2, 2] = 5;
         _cache.JacobianMatrix.Invert3X3();
         _cache.DerivativeVector.Fill(0.0);
     }

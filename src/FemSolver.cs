@@ -21,6 +21,13 @@ public class FemSolver
             _solverFem._f = ExpressionCompiler.CompileToLambda(test.SourceExpr);
             return this;
         }
+        
+        public FemSolverBuilder SetTest(Func<Point3D, double> u, Func<Point3D, double> f)
+        {
+            _solverFem._u = u;
+            _solverFem._f = f;
+            return this;
+        }
 
         public FemSolverBuilder SetIterativeSolver(IterativeSolver iterativeSolver)
         {
@@ -43,23 +50,13 @@ public class FemSolver
     private Func<Point3D, double> _f = null!;
     private Func<Point3D, double> _u = null!;
     private IEnumerable<DirichletBoundary> _boundaries = null!;
-
+    
     public static FemSolverBuilder CreateBuilder() => new();
 
     public void Solve()
     {
         EnsureInitialization();
-        AssemblyInternal();
-
-        // var exact = new Vector<double>(_assembler.Mesh.Points.Count);
-        // for (int i = 0; i < _assembler.Mesh.Points.Count; i++)
-        // {
-        //     exact[i] = _assembler.Mesh.Points[i].X;
-        // }
-        // exact.Fill(1.0);
-        //
-        // var t = _assembler.GlobalMatrix! * exact;
-
+        AssemblyInner();
         AccountingDirichletBoundary();
 
         _iterativeSolver.SetMatrixEx(_assembler.GlobalMatrix!).SetVectorEx(_assembler.Vector);
@@ -72,6 +69,13 @@ public class FemSolver
         }
     }
 
+    public void CalculateError()
+    {
+        var exactValues = _assembler.Mesh.Points.Select(p => _u(p)).ToArray();
+        var errors = exactValues.Select((v, i) => Math.Abs(v - _iterativeSolver.Solution!.Value[i])).ToArray();
+        Console.WriteLine($"RMS = {Math.Sqrt(errors.Sum(e => e * e) / errors.Length)}");
+    }
+
     private void EnsureInitialization()
     {
         PortraitBuilder.Build(_assembler.Mesh, out var ig, out var jg);
@@ -82,7 +86,7 @@ public class FemSolver
         };
     }
 
-    private void AssemblyInternal()
+    private void AssemblyInner()
     {
         for (int ielem = 0; ielem < _assembler.Mesh.Elements.Count; ielem++)
         {
@@ -106,18 +110,12 @@ public class FemSolver
     {
         Span<int> checkBc = stackalloc int[_assembler.Mesh.Points.Count];
         checkBc.Fill(-1);
-        var boundariesArray = Enumerable.Range(0, _assembler.Mesh.Points.Count)
-            .Select(i => (Node: i, Value: _u(_assembler.Mesh.Points[i])))
-            .Where(i => i.Node != 13)
-            .ToArray();
-
-        // var boundariesArray = _boundaries.ToArray();
-
+        var boundariesArray = _boundaries.ToArray();
 
         for (int i = 0; i < boundariesArray.Length; i++)
         {
             checkBc[boundariesArray[i].Node] = i;
-            // boundariesArray[i].Value = _u(_assembler.Mesh.Points[boundariesArray[i].Node]);
+            boundariesArray[i].Value = _u(_assembler.Mesh.Points[boundariesArray[i].Node]);
         }
 
         // for (int i = 0, k = boundariesArray.Length - 1;

@@ -6,9 +6,9 @@
   ],
   "Radius": [
     5,
-    10,
-    15
+    15,
+    25
   ],
-  "Theta splits": 5,
-  "Phi splits": 5
+  "Stack splits": 5,
+  "Slice splits": 5
 }
