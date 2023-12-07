@@ -71,12 +71,12 @@ def plot_uv_sphere(n_slices, n_stacks):
     # Plot triangles
     for triangle in triangles:
         ax.add_collection3d(
-            Poly3DCollection([vertices[triangle]], alpha=0.5, linewidths=1, edgecolors='r', facecolors='cyan'))
+            Poly3DCollection([vertices[triangle]], alpha=0.2, linewidths=1, edgecolors='r', facecolors='cyan'))
 
     # Plot quads
     for quad in quads:
         ax.add_collection3d(
-            Poly3DCollection([vertices[quad]], alpha=0.5, linewidths=1, edgecolors='r', facecolors='cyan'))
+            Poly3DCollection([vertices[quad]], alpha=0.2, linewidths=1, edgecolors='r', facecolors='cyan'))
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
@@ -129,10 +129,26 @@ def plot_uv_sphere(n_slices, n_stacks):
     ax.scatter(vertices2[:, 0], vertices2[:, 1], vertices2[:, 2])
     ax.scatter(vertices3[:, 0], vertices3[:, 1], vertices3[:, 2])
 
+    for quad in quads:
+        ax.add_collection3d(
+            Poly3DCollection([vertices2[quad]], alpha=0.2, linewidths=1, edgecolors='r', facecolors='green'))
+
+    for quad in quads:
+        ax.add_collection3d(
+            Poly3DCollection([vertices3[quad]], alpha=0.2, linewidths=1, edgecolors='r', facecolors='orange'))
+
+    for triangle in triangles:
+        ax.add_collection3d(
+            Poly3DCollection([vertices2[triangle]], alpha=0.2, linewidths=1, edgecolors='r', facecolors='green'))\
+        
+    for triangle in triangles:
+        ax.add_collection3d(
+            Poly3DCollection([vertices3[triangle]], alpha=0.2, linewidths=1, edgecolors='r', facecolors='orange'))
+
     plt.show()
 
 
 # Example usage
 n_slices = 4
-n_stacks = 4
+n_stacks = 3
 plot_uv_sphere(n_slices, n_stacks)

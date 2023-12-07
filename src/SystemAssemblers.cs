@@ -35,7 +35,6 @@ public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator inte
     }
 
     private readonly AssemblerCache _cache = new();
-    private readonly Matrix<double> _baseStiffnessMatrix = new(basis.Size);
     private readonly Point3D[] _cachedVertices = new Point3D[4]; // for tetrahedron
     private readonly Tetrahedron _templateElement = Tetrahedron.TemplateElement;
 
@@ -46,7 +45,8 @@ public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator inte
 
     public BaseBasis3D Basis => basis;
     public SphereMesh Mesh => mesh;
-    public Matrix<double> StiffnessMatrix => _baseStiffnessMatrix;
+    public Matrix<double> StiffnessMatrix { get; } = new(basis.Size);
+
     private Matrix<double> MassMatrix { get; } = new(basis.Size);
     public Vector<double> Vector { get; } = new(mesh.Points.Count);
     public SparseMatrix? GlobalMatrix { get; set; }
@@ -96,12 +96,12 @@ public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator inte
 
                 var function = double (Point3D p) =>
                 {
-                    var dxFi1 = Basis.GetDPsi(i1, 0, p);
-                    var dxFj2 = Basis.GetDPsi(j1, 0, p);
-                    var dyFi1 = Basis.GetDPsi(i1, 1, p);
-                    var dyFj2 = Basis.GetDPsi(j1, 1, p);
-                    var dzFi1 = Basis.GetDPsi(i1, 2, p);
-                    var dzFj2 = Basis.GetDPsi(j1, 2, p);
+                    var dxFi = Basis.GetDPsi(i1, 0, p);
+                    var dxFj = Basis.GetDPsi(j1, 0, p);
+                    var dyFi = Basis.GetDPsi(i1, 1, p);
+                    var dyFj = Basis.GetDPsi(j1, 1, p);
+                    var dzFi = Basis.GetDPsi(i1, 2, p);
+                    var dzFj = Basis.GetDPsi(j1, 2, p);
 
                     if (!_cache.CalculateCache.TryGetValue(p, out var currentCalculates))
                     {
@@ -110,20 +110,20 @@ public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator inte
                         _cache.CalculateCache[p] = currentCalculates;
                     }
 
-                    _doubleVector[0] = dxFi1;
-                    _doubleVector[1] = dyFi1;
-                    _doubleVector[2] = dzFi1;
-                    _doubleVector[3] = dxFj2;
-                    _doubleVector[4] = dyFj2;
-                    _doubleVector[5] = dzFj2;
+                    _doubleVector[0] = dxFi;
+                    _doubleVector[1] = dyFi;
+                    _doubleVector[2] = dzFi;
+                    _doubleVector[3] = dxFj;
+                    _doubleVector[4] = dyFj;
+                    _doubleVector[5] = dzFj;
 
                     return AssemblerCache.MultiplyMatrixByVector(currentCalculates.Inverse, _doubleVector.AsSpan(..3),
                                _cache.ResultVector1) *
                            AssemblerCache.MultiplyMatrixByVector(currentCalculates.Inverse, _doubleVector.AsSpan(3..6),
                                _cache.ResultVector2) * Math.Abs(currentCalculates.Determinant);
                 };
-                _baseStiffnessMatrix[i, j] =
-                    _baseStiffnessMatrix[j, i] = integrator.Gauss3D(function, _templateElement);
+                StiffnessMatrix[i, j] =
+                    StiffnessMatrix[j, i] = integrator.Gauss3D(function, _templateElement);
 
                 function = double (p) =>
                 {
@@ -188,17 +188,7 @@ public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator inte
         _cache.JacobianMatrix[2, 0] = dx[2];
         _cache.JacobianMatrix[2, 1] = dy[2];
         _cache.JacobianMatrix[2, 2] = dz[2];
-
         
-        _cache.JacobianMatrix[0, 0] = 1;
-        _cache.JacobianMatrix[0, 1] = 2;
-        _cache.JacobianMatrix[0, 2] = 3;
-        _cache.JacobianMatrix[1, 0] = 4;
-        _cache.JacobianMatrix[1, 1] = 5;
-        _cache.JacobianMatrix[1, 2] = 6;
-        _cache.JacobianMatrix[2, 0] = 7;
-        _cache.JacobianMatrix[2, 1] = 8;
-        _cache.JacobianMatrix[2, 2] = 5;
         _cache.JacobianMatrix.Invert3X3();
         _cache.DerivativeVector.Fill(0.0);
     }
