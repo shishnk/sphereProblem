@@ -6,14 +6,18 @@ namespace SphereProblem;
 public abstract class BaseBasis3D
 {
     protected Matrix4x4 _alphasMatrix = Matrix4x4.Identity;
+    
+    protected BaseBasis3D() => UpdateCache();
 
     public abstract int Size { get; }
 
     public abstract double GetPsi(int functionNumber, Point3D point);
     public abstract double GetDPsi(int functionNumber, int varNumber, Point3D point);
 
-    public void UpdateCache(IReadOnlyList<Point3D> vertices)
+    private void UpdateCache()
     {
+        var vertices = Tetrahedron.TemplateElement.Vertices;
+        
         _alphasMatrix[0, 0] = 1.0f;
         _alphasMatrix[0, 1] = 1.0f;
         _alphasMatrix[0, 2] = 1.0f;

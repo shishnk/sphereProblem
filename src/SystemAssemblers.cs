@@ -35,7 +35,6 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
 
     private readonly AssemblerCache _cache = new();
     private readonly Matrix<double> _baseStiffnessMatrix = new(basis.Size);
-    private readonly Point3D[] _cachedVertices = new Point3D[4]; // for tetrahedron
     private readonly Tetrahedron _templateElement = Tetrahedron.TemplateElement;
 
     /// <summary>
@@ -74,17 +73,8 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
         }
     }
 
-    [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed")]
     public void AssemblyLocalMatrices(int ielem)
     {
-        var selectedElement = mesh.Elements[ielem];
-
-        _cachedVertices[0] = mesh.Points[selectedElement[0]];
-        _cachedVertices[1] = mesh.Points[selectedElement[1]];
-        _cachedVertices[2] = mesh.Points[selectedElement[2]];
-        _cachedVertices[3] = mesh.Points[selectedElement[3]];
-
-        Basis.UpdateCache(_cachedVertices);
         _cache.CalculateCache.Clear();
 
         for (int i = 0; i < Basis.Size; i++)
