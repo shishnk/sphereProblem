@@ -106,7 +106,7 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
                     if (!_cache.CalculateCache.TryGetValue(p, out var currentCalculates))
                     {
                         CalculateJacobian(ielem, p);
-                        currentCalculates = (_cache.JacobianMatrix.Determinant!.Value, _cache.JacobianMatrix);
+                        currentCalculates = (_cache.JacobianMatrix.Determinant!.Value, (Matrix<double>)_cache.JacobianMatrix.Clone());
                         _cache.CalculateCache[p] = currentCalculates;
                     }
 
@@ -130,16 +130,7 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
                     var fi1 = Basis.GetPsi(i1, p);
                     var fj2 = Basis.GetPsi(j1, p);
 
-                    if (_cache.CalculateCache.TryGetValue(p, out var currentCalculates))
-                    {
-                        return fi1 * fj2 * Math.Abs(currentCalculates.Determinant);
-                    }
-
-                    CalculateJacobian(ielem, p);
-                    currentCalculates = (_cache.JacobianMatrix.Determinant!.Value, _cache.JacobianMatrix);
-                    _cache.CalculateCache[p] = currentCalculates;
-
-                    return fi1 * fj2 * Math.Abs(currentCalculates.Determinant);
+                    return fi1 * fj2 * Math.Abs(_cache.CalculateCache[p].Determinant);
                 };
 
                 MassMatrix[i, j] = MassMatrix[j, i] = integrator.Gauss3D(function, _templateElement);

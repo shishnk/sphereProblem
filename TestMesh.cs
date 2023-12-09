@@ -78,13 +78,13 @@ public class TestMeshBuilder(TestMeshParameters parameters)
                     // _elements[index++] = new(new[] { nodes[2], nodes[7], nodes[1], nodes[3] });
                     
                     // into 6 tetrahedrons
-                    _elements[index++] = new(new[] { nodes[6], nodes[7], nodes[5], nodes[3] });
-                    _elements[index++] = new(new[] { nodes[4], nodes[6], nodes[5], nodes[1] });
-                    _elements[index++] = new(new[] { nodes[0], nodes[4], nodes[1], nodes[2] });
+                    _elements[index++] = new(new[] { nodes[0], nodes[1], nodes[2], nodes[6] });
+                    _elements[index++] = new(new[] { nodes[0], nodes[1], nodes[6], nodes[4] });
+                    _elements[index++] = new(new[] { nodes[1], nodes[3], nodes[2], nodes[6] });
                     
-                    _elements[index++] = new(new[] { nodes[2], nodes[6], nodes[1], nodes[4] });
-                    _elements[index++] = new(new[] { nodes[1], nodes[5], nodes[3], nodes[6] });
-                    _elements[index++] = new(new[] { nodes[1], nodes[2], nodes[3], nodes[6] });
+                    _elements[index++] = new(new[] { nodes[1], nodes[7], nodes[6], nodes[5] });
+                    _elements[index++] = new(new[] { nodes[1], nodes[3], nodes[6], nodes[7] });
+                    _elements[index++] = new(new[] { nodes[1], nodes[6], nodes[4], nodes[5] });
                 }
             }
         }
@@ -124,42 +124,41 @@ public class TestMeshBuilder(TestMeshParameters parameters)
 
                     _elements[idx++] = new(new[]
                     {
-                        // 24, 26, 20, 8 -- vertices
-                        nodes[24], nodes[26], nodes[20], nodes[8],
-                        nodes[25], nodes[22], nodes[16], nodes[23], nodes[17], nodes[14]
+                        // 0, 2, 6, 24 -- vertices
+                        nodes[0], nodes[2], nodes[6], nodes[24],
+                        nodes[1], nodes[3], nodes[12], nodes[4], nodes[13], nodes[15]
                     });
                     _elements[idx++] = new(new[]
                     {
-                        // 18, 24, 20, 2
-                        nodes[18], nodes[24], nodes[20], nodes[2],
-                        nodes[21], nodes[19], nodes[10], nodes[22], nodes[13], nodes[11]
+                        // 0, 2, 24, 18
+                        nodes[0], nodes[2], nodes[24], nodes[18],
+                        nodes[1], nodes[12], nodes[9], nodes[13], nodes[10], nodes[21]
                     });
                     _elements[idx++] = new(new[]
                     {
-                        // 0, 18, 2, 6
-                        nodes[0], nodes[18], nodes[2], nodes[6],
-                        nodes[9], nodes[1], nodes[3], nodes[10], nodes[12], nodes[4]
+                        // 2, 8, 6, 24
+                        nodes[2], nodes[8], nodes[6], nodes[24],
+                        nodes[5], nodes[4], nodes[13], nodes[7], nodes[16], nodes[15]
                     });
                     
                     _elements[idx++] = new(new[]
                     {
-                        // 18, 24, 6, 2
-                        nodes[18], nodes[24], nodes[6], nodes[2],
-                        nodes[21], nodes[12], nodes[10], nodes[15], nodes[13], nodes[4]
+                        // 2, 26, 24, 20
+                        nodes[2], nodes[26], nodes[24], nodes[20],
+                        nodes[14], nodes[13], nodes[11], nodes[25], nodes[23], nodes[22]
                     });
                     _elements[idx++] = new(new[]
                     {
-                        // 2, 20, 8, 24
-                        nodes[2], nodes[20], nodes[8], nodes[24],
-                        nodes[11], nodes[5], nodes[13], nodes[14], nodes[22], nodes[16]
+                        // 2, 8, 24, 26
+                        nodes[2], nodes[8], nodes[24], nodes[26],
+                        nodes[5], nodes[13], nodes[14], nodes[16], nodes[17], nodes[25]
                     });
                     _elements[idx++] = new(new[]
                     {
-                        // 2, 6, 8, 24
-                        nodes[2], nodes[6], nodes[8], nodes[24],
-                        nodes[4], nodes[5], nodes[13], nodes[7], nodes[15], nodes[16]
+                        // 2, 24, 18, 20
+                        nodes[2], nodes[24], nodes[18], nodes[20],
+                        nodes[13], nodes[10], nodes[11], nodes[21], nodes[22], nodes[19]
                     });
-                
                     
                     // breaks up into 5 tetrahedrons
                     // _elements[idx++] = new(new[]
