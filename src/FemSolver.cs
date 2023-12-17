@@ -71,6 +71,13 @@ public class FemSolver
                 $"Point {_assembler.Mesh.Points[i]} -- {_iterativeSolver.Solution.Value[i]}, exact -- {_u(_assembler.Mesh.Points[i])}");
         }
     }
+    
+    public void CalculateError()
+    {
+        var exactValues = _assembler.Mesh.Points.Select(p => _u(p)).ToArray();
+        var errors = exactValues.Select((v, i) => Math.Abs(v - _iterativeSolver.Solution!.Value[i])).ToArray();
+        Console.WriteLine($"RMS = {Math.Sqrt(errors.Sum(e => e * e) / errors.Length)}");
+    }
 
     private void EnsureInitialization()
     {
@@ -106,18 +113,12 @@ public class FemSolver
     {
         Span<int> checkBc = stackalloc int[_assembler.Mesh.Points.Count];
         checkBc.Fill(-1);
-        var boundariesArray = Enumerable.Range(0, _assembler.Mesh.Points.Count)
-            .Select(i => (Node: i, Value: _u(_assembler.Mesh.Points[i])))
-            .Where(i => i.Node != 13)
-            .ToArray();
-
-        // var boundariesArray = _boundaries.ToArray();
-
+        var boundariesArray = _boundaries.ToArray();
 
         for (int i = 0; i < boundariesArray.Length; i++)
         {
             checkBc[boundariesArray[i].Node] = i;
-            // boundariesArray[i].Value = _u(_assembler.Mesh.Points[boundariesArray[i].Node]);
+            boundariesArray[i].Value = _u(_assembler.Mesh.Points[boundariesArray[i].Node]);
         }
 
         // for (int i = 0, k = boundariesArray.Length - 1;

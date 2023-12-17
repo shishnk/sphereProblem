@@ -58,6 +58,12 @@ public readonly record struct Point3D(double X, double Y, double Z)
         _ => throw new ArgumentOutOfRangeException(nameof(index), index, "Invalid point index")
     };
 
+    public static Point3D UnitX => (1.0, 0.0, 0.0);
+    
+    public static Point3D UnitY => (0.0, 1.0, 0.0);
+    
+    public static Point3D UnitZ => (0.0, 0.0, 1.0);
+
     public static bool TryParse(string line, out Point3D point)
     {
         var words = line.Split(new[] { ' ', ',', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);

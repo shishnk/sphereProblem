@@ -7,23 +7,26 @@ public abstract class BaseSphereMeshBuilder(SphereMeshParameters parameters)
     private SphereMesh? _sphereMesh;
     protected Point3D[]? _points;
     protected FiniteElement[]? _elements;
-    protected (int, int, int)[]? _faces; // for python
-    protected int[][]? _parallelepipedNodes; // for python
+    protected List<int[]>? _parallelepipedNodes; // for python
 
     public abstract void CreatePoints();
     public abstract void CreateElements();
 
-    protected void CreatePointsInternal(int phiSplits, int thetaSplits)
+    protected void CreatePointsInner(int phiSplits, int thetaSplits)
     {
-        _points = new Point3D[phiSplits * thetaSplits * parameters.Radius.Count];
+        _points = new Point3D[(phiSplits - 1) * thetaSplits * parameters.Radius.Count + parameters.Radius.Count];
 
-        var phi = Math.PI / (phiSplits - 1);
-        var theta = 2.0 * Math.PI / (thetaSplits - 1);
+        var phi = Math.PI / 4 / (phiSplits - 1);
+        var theta = Math.PI / 2 /  (thetaSplits - 1);
+        
+        for (int t = parameters.Radius.Count - 1, idx = 0; t >= 0; t--, idx++) _points[idx] = parameters.Center + parameters.Radius[t] * Point3D.UnitZ;
 
-        for (int i = 0, idx = 0; i < phiSplits; i++)
+        for (int i = 1, idx = parameters.Radius.Count; i < phiSplits; i++)
         {
-            foreach (var r in parameters.Radius.Reverse())
+            for (int k = parameters.Radius.Count - 1; k >= 0; k--)
             {
+                var r = parameters.Radius[k];
+                
                 for (int j = 0; j < thetaSplits; j++, idx++)
                 {
                     var x = r * Math.Sin(phi * i) * Math.Cos(j * theta) + parameters.Center.X;
@@ -34,8 +37,6 @@ public abstract class BaseSphereMeshBuilder(SphereMeshParameters parameters)
                 }
             }
         }
-
-        Console.WriteLine();
     }
 
     public SphereMesh GetMeshInstance()
@@ -68,7 +69,7 @@ public abstract class BaseSphereMeshBuilder(SphereMeshParameters parameters)
 
 public class LinearSphereMesh2DBuilder(SphereMeshParameters parameters) : BaseSphereMeshBuilder(parameters)
 {
-    public override void CreatePoints() => CreatePointsInternal(parameters.PhiSplits, parameters.ThetaSplits);
+    public override void CreatePoints() => CreatePointsInner(parameters.PhiSplits, parameters.ThetaSplits);
 
     public override void CreateElements()
     {
@@ -93,7 +94,7 @@ public class LinearSphereMesh2DBuilder(SphereMeshParameters parameters) : BaseSp
 public class QuadraticSphereMesh2DBuilder(SphereMeshParameters parameters) : BaseSphereMeshBuilder(parameters)
 {
     public override void CreatePoints() =>
-        CreatePointsInternal(2 * parameters.PhiSplits - 1, 2 * parameters.ThetaSplits - 1);
+        CreatePointsInner(2 * parameters.PhiSplits - 1, 2 * parameters.ThetaSplits - 1);
 
     public override void CreateElements()
     {
@@ -127,96 +128,83 @@ public class QuadraticSphereMesh2DBuilder(SphereMeshParameters parameters) : Bas
 
 public class LinearSphereMesh3DBuilder(SphereMeshParameters parameters) : BaseSphereMeshBuilder(parameters)
 {
-    public override void CreatePoints() => CreatePointsInternal(parameters.ThetaSplits, parameters.PhiSplits);
+    public override void CreatePoints() => CreatePointsInner(parameters.ThetaSplits, parameters.PhiSplits);
 
     public override void CreateElements()
     {
-        const int elementSize = 8; // parallelepiped's vertices count
+        const int parallelepipedSize = 8; // parallelepiped's vertices count
+        const int prismSize = 6;
         _elements = new FiniteElement[(parameters.PhiSplits - 1) * (parameters.ThetaSplits - 1) *
-                                      (parameters.Radius.Count - 1) * 6];
-        _faces = new (int, int, int)[_elements.Length * 4]; // rough estimation
-        _parallelepipedNodes = new int[_elements.Length / 6][];
-        Span<int> nodes = stackalloc int[elementSize];
+            (parameters.Radius.Count - 1) * 3 + (parameters.Radius.Count - 1) * (parameters.ThetaSplits - 1) * 3];
+        _parallelepipedNodes = [];
+        Span<int> parallelepipedNodes = stackalloc int[parallelepipedSize];
+        Span<int> prismNodes = stackalloc int[prismSize];
 
-        for (var i = 0; i < _parallelepipedNodes.Length; i++)
+        for (var i = 0; i < _parallelepipedNodes.Count; i++)
         {
-            _parallelepipedNodes[i] = new int[elementSize];
+            _parallelepipedNodes[i] = new int[parallelepipedSize];
         }
 
+        var skip = parameters.Radius.Count;
         var nx = parameters.ThetaSplits;
         var ny = parameters.Radius.Count;
-
-        for (int k = 0, index = 0, faceIdx = 0, pIdx = 0; k < parameters.PhiSplits - 1; k++)
+        int index = 0;
+        
+        for (int k = 0; k < parameters.PhiSplits - 2; k++)
         {
             for (int j = 0; j < parameters.Radius.Count - 1; j++)
             {
-                for (int i = 0; i < parameters.ThetaSplits - 1; i++)
+                for (int i = 0; i < parameters.ThetaSplits - 1; i++) 
                 {
-                    nodes[0] = i + j * nx + k * nx * ny;
-                    nodes[1] = i + 1 + j * nx + k * nx * ny;
-                    nodes[2] = i + (j + 1) * nx + k * nx * ny;
-                    nodes[3] = i + 1 + (j + 1) * nx + k * nx * ny;
-                    nodes[4] = i + j * nx + (k + 1) * nx * ny;
-                    nodes[5] = i + 1 + j * nx + (k + 1) * nx * ny;
-                    nodes[6] = i + (j + 1) * nx + (k + 1) * nx * ny;
-                    nodes[7] = i + 1 + (j + 1) * nx + (k + 1) * nx * ny;
+                    // + skip == skip prizm points
+                    parallelepipedNodes[0] = i + (j + 1) * nx + k * nx * ny + skip + j * nx;
+                    parallelepipedNodes[1] = i + 1 + (j + 1) * nx + k * nx * ny + skip + j * nx;
+                    parallelepipedNodes[2] = i + j * nx + (k + 1) * nx * ny + skip + j * nx;
+                    parallelepipedNodes[3] = i + 1 + j * nx + (k + 1) * nx * ny + skip + j * nx;
+                    parallelepipedNodes[4] = i + j * nx + k * nx * ny + skip + j * nx;
+                    parallelepipedNodes[5] = i + 1 + j * nx + k * nx * ny + skip + j * nx;
+                    parallelepipedNodes[6] = parallelepipedNodes[2] - skip;
+                    parallelepipedNodes[7] = parallelepipedNodes[3] - skip;
+                    
+                    _parallelepipedNodes.Add(parallelepipedNodes.ToArray());
 
-                    _parallelepipedNodes[pIdx++] = nodes.ToArray();
-
-                    _elements[index++] = new(new[] { nodes[6], nodes[7], nodes[5], nodes[3] });
-                    _faces[faceIdx++] = (nodes[6], nodes[7], nodes[5]);
-                    _faces[faceIdx++] = (nodes[3], nodes[5], nodes[7]);
-                    _faces[faceIdx++] = (nodes[3], nodes[6], nodes[7]);
-                    _faces[faceIdx++] = (nodes[3], nodes[5], nodes[6]);
-
-                    _elements[index++] = new(new[] { nodes[4], nodes[6], nodes[5], nodes[1] });
-                    _faces[faceIdx++] = (nodes[4], nodes[6], nodes[5]);
-                    _faces[faceIdx++] = (nodes[1], nodes[5], nodes[6]);
-                    _faces[faceIdx++] = (nodes[1], nodes[4], nodes[6]);
-                    _faces[faceIdx++] = (nodes[1], nodes[5], nodes[4]);
-
-                    _elements[index++] = new(new[] { nodes[0], nodes[4], nodes[1], nodes[2] });
-                    _faces[faceIdx++] = (nodes[0], nodes[4], nodes[1]);
-                    _faces[faceIdx++] = (nodes[2], nodes[1], nodes[4]);
-                    _faces[faceIdx++] = (nodes[2], nodes[0], nodes[4]);
-                    _faces[faceIdx++] = (nodes[2], nodes[1], nodes[0]);
-
-                    _elements[index++] = new(new[] { nodes[0], nodes[6], nodes[1], nodes[4] });
-                    _faces[faceIdx++] = (nodes[2], nodes[6], nodes[1]);
-                    _faces[faceIdx++] = (nodes[4], nodes[1], nodes[6]);
-                    _faces[faceIdx++] = (nodes[4], nodes[2], nodes[6]);
-                    _faces[faceIdx++] = (nodes[4], nodes[1], nodes[2]);
-
-                    _elements[index++] = new(new[] { nodes[1], nodes[5], nodes[3], nodes[6] });
-                    _faces[faceIdx++] = (nodes[1], nodes[5], nodes[3]);
-                    _faces[faceIdx++] = (nodes[6], nodes[3], nodes[5]);
-                    _faces[faceIdx++] = (nodes[6], nodes[1], nodes[5]);
-                    _faces[faceIdx++] = (nodes[6], nodes[3], nodes[1]);
-
-                    _elements[index++] = new(new[] { nodes[1], nodes[6], nodes[3], nodes[2] });
-                    _faces[faceIdx++] = (nodes[1], nodes[6], nodes[3]);
-                    _faces[faceIdx++] = (nodes[2], nodes[3], nodes[6]);
-                    _faces[faceIdx++] = (nodes[2], nodes[1], nodes[6]);
-                    _faces[faceIdx++] = (nodes[2], nodes[3], nodes[1]);
+                    _elements[index++] = new([parallelepipedNodes[6], parallelepipedNodes[7], parallelepipedNodes[5], parallelepipedNodes[3]]);
+                    _elements[index++] = new([parallelepipedNodes[4], parallelepipedNodes[6], parallelepipedNodes[5], parallelepipedNodes[1]]);
+                    _elements[index++] = new([parallelepipedNodes[0], parallelepipedNodes[4], parallelepipedNodes[1], parallelepipedNodes[2]]);
+                    _elements[index++] = new([parallelepipedNodes[0], parallelepipedNodes[6], parallelepipedNodes[1], parallelepipedNodes[4]]);
+                    _elements[index++] = new([parallelepipedNodes[1], parallelepipedNodes[5], parallelepipedNodes[3], parallelepipedNodes[6]]);
+                    _elements[index++] = new([parallelepipedNodes[1], parallelepipedNodes[6], parallelepipedNodes[3], parallelepipedNodes[2]]);
                 }
             }
         }
+
+        for (int i = 0; i < parameters.Radius.Count - 1; i++)
+        {
+            for (int j = 0; j < parameters.ThetaSplits - 1; j++)
+            {
+                prismNodes[0] = j + i * nx + skip + i * nx;
+                prismNodes[1] = j + 1 + i * nx + skip + i * nx;
+                prismNodes[2] = i;
+                prismNodes[3] = prismNodes[0] + nx * (ny - 1);
+                prismNodes[4] = prismNodes[3] + 1;
+                prismNodes[5] = i + 1;
+
+                _elements[index++] = new([prismNodes[3], prismNodes[4], prismNodes[5], prismNodes[1]]);
+                _elements[index++] = new([prismNodes[3], prismNodes[5], prismNodes[1], prismNodes[2]]);
+                _elements[index++] = new([prismNodes[3], prismNodes[0], prismNodes[1], prismNodes[2]]);
+            }
+        }
+        
     }
 
     protected override void WriteToFile()
     {
         using StreamWriter sw1 = new("../../../SphereMeshContext/Python/points"),
-            sw2 = new("../../../SphereMeshContext/Python/faces"),
             sw3 = new("../../../SphereMeshContext/Python/parallelepipeds");
 
         foreach (var point in _points!)
         {
             sw1.WriteLine(point.ToString());
-        }
-
-        foreach (var face in _faces!)
-        {
-            sw2.WriteLine($"{face.Item1} {face.Item2} {face.Item3}");
         }
         
         foreach (var node in _parallelepipedNodes!)

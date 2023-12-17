@@ -4,13 +4,13 @@ namespace SphereProblem;
 
 public static class PortraitBuilder
 {
-    public static void Build(TestMesh mesh, out int[] ig, out int[] jg)
+    public static void Build(SphereMesh mesh, out int[] ig, out int[] jg)
     {
         var connectivityList = new List<HashSet<int>>();
 
         for (int i = 0; i < mesh.Points.Count; i++)
         {
-            connectivityList.Add(new());
+            connectivityList.Add([]);
         }
 
         var localSize = mesh.Elements[0].Nodes.Count;

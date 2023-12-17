@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using SphereProblem.Geometry;
+using SphereProblem.SphereMeshContext;
 
 namespace SphereProblem;
 
-public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integrator)
+public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator integrator)
 {
     /// <summary>
     ///  Cache contains data for assembler and help methods.
@@ -43,7 +44,7 @@ public class SystemAssembler(BaseBasis3D basis, TestMesh mesh, Integrator integr
     private readonly Vector<double> _doubleVector = new(6);
 
     public BaseBasis3D Basis => basis;
-    public TestMesh Mesh => mesh;
+    public SphereMesh Mesh => mesh;
     public Matrix<double> StiffnessMatrix => _baseStiffnessMatrix;
 
     private Matrix<double> MassMatrix { get; } = new(basis.Size);
