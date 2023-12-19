@@ -1,23 +1,31 @@
-﻿using System.Text.Json;
+﻿using System.Collections.ObjectModel;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using SphereProblem.Geometry;
 
 namespace SphereProblem.SphereMeshContext;
 
-public record SphereMeshParameters
+// ReSharper disable once ClassNeverInstantiated.Global
+public class SphereMeshParameters
 {
-    [JsonRequired] public Point3D Center { get; init; }
-    [JsonRequired] public IReadOnlyList<double> Radius { get; init; }
+    private readonly List<double> _radius = null!;
 
-    [JsonPropertyName("Theta splits"), JsonRequired]
-    public int ThetaSplits { get; init; }
+    public Point3D Center { get; }
 
-    [JsonPropertyName("Phi splits"), JsonRequired]
-    public int PhiSplits { get; init; }
+    public IReadOnlyList<double> Radius
+    {
+        get => _radius;
+        private init => _radius = (value as List<double>)!;
+    }
 
-    [JsonRequired] public int Refinement { get; init; }
+    [JsonPropertyName("Theta splits")]
+    public int ThetaSplits { get; }
 
-    public SphereMeshParameters(Point3D center, IReadOnlyList<double> radius,
+    [JsonPropertyName("Phi splits")]
+    public int PhiSplits { get; }
+
+    [JsonConstructor]
+    public SphereMeshParameters(Point3D center, List<double> radius,
         int thetaSplits,
         int phiSplits,
         int refinement)
@@ -26,7 +34,31 @@ public record SphereMeshParameters
         Radius = radius;
         ThetaSplits = thetaSplits * (refinement + 1);
         PhiSplits = phiSplits * (refinement + 1);
-        Refinement = refinement;
+        InsureRefinement(refinement);
+    }
+
+    private void InsureRefinement(int refinement)
+    {
+        for (int i = 0; i < refinement; i++)
+        {
+            var count = _radius.Count - 1;
+
+            for (var j = 0; j < count; j++)
+            {
+                _radius.Add((_radius[j] + _radius[j + 1]) / 2.0);
+            }
+        }
+
+        _radius.Sort();
+        
+        // LINQ
+        // _radius = Enumerable.Range(0, refinement)
+        //     .Aggregate(_radius, (current, _) => current
+        //         .Select((t, i) => i < current.Count - 1 ? new[] { t, (t + current[i + 1]) / 2.0 } : new[] { t })
+        //         .SelectMany(x => x)
+        //         .ToList())
+        //     .OrderBy(x => x)
+        //     .ToList();
     }
 
     public static SphereMeshParameters ReadFromJsonFile(string jsonPath)

@@ -19,15 +19,16 @@ public static class PortraitBuilder
         {
             for (int i = 0; i < localSize; i++)
             {
-                var posToInsert = element[i];
+                var nodeToInsert = element[i];
 
                 for (int j = 0; j < localSize; j++)
                 {
-                    var nodeToInsert = element[j];
-                    
-                    if (posToInsert <= nodeToInsert) continue;
+                    var posToInsert = element[j];
 
-                    connectivityList[posToInsert].Add(nodeToInsert);
+                    if (nodeToInsert < posToInsert)
+                    {
+                        connectivityList[posToInsert].Add(nodeToInsert);
+                    }
                 }
             }
         }

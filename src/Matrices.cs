@@ -76,7 +76,7 @@ public class SparseMatrix(int size, int sizeOffDiag)
 public class Matrix<T>(int size) : ICloneable where T : struct, INumber<T>, IRootFunctions<T>
 {
     private readonly T[,] _storage = new T[size, size];
-    private T? _determinant;
+    // private T? _determinant;
 
     public int Size { get; } = size;
     public bool IsDecomposed { get; private set; }
@@ -86,7 +86,7 @@ public class Matrix<T>(int size) : ICloneable where T : struct, INumber<T>, IRoo
         get
         {
             if (size != 3) return null;
-            if (_determinant != null) return _determinant.Value;
+            // if (_determinant != null) return _determinant.Value;
 
             var m11 = this[0, 0];
             var m12 = this[0, 1];
@@ -98,10 +98,10 @@ public class Matrix<T>(int size) : ICloneable where T : struct, INumber<T>, IRoo
             var m32 = this[2, 1];
             var m33 = this[2, 2];
 
-            _determinant = m11 * (m22 * m33 - m23 * m32) - m12 * (m21 * m33 - m23 * m31) +
+            return m11 * (m22 * m33 - m23 * m32) - m12 * (m21 * m33 - m23 * m31) +
                            m13 * (m21 * m32 - m22 * m31);
 
-            return _determinant.Value;
+            // return _determinant.Value;
         }
     }
 

@@ -37,6 +37,7 @@ public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator inte
     private readonly AssemblerCache _cache = new();
     private readonly Matrix<double> _baseStiffnessMatrix = new(basis.Size);
     private readonly Tetrahedron _templateElement = Tetrahedron.TemplateElement;
+    private double _directDeterminant;
 
     /// <summary>
     /// 0..3 one vector, 3..6 another vector
@@ -97,7 +98,7 @@ public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator inte
                     if (!_cache.CalculateCache.TryGetValue(p, out var currentCalculates))
                     {
                         CalculateJacobian(ielem, p);
-                        currentCalculates = (_cache.JacobianMatrix.Determinant!.Value, (Matrix<double>)_cache.JacobianMatrix.Clone());
+                        currentCalculates = (_directDeterminant, (Matrix<double>)_cache.JacobianMatrix.Clone());
                         _cache.CalculateCache[p] = currentCalculates;
                     }
 
@@ -170,6 +171,8 @@ public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator inte
         _cache.JacobianMatrix[2, 0] = dx[2];
         _cache.JacobianMatrix[2, 1] = dy[2];
         _cache.JacobianMatrix[2, 2] = dz[2];
+
+        _directDeterminant = _cache.JacobianMatrix.Determinant!.Value;
 
         _cache.JacobianMatrix.Invert3X3();
         _cache.DerivativeVector.Fill(0.0);

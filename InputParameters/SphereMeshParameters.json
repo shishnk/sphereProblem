@@ -7,9 +7,10 @@
   "Radius": [
     1,
     2,
-    3
+    3,
+    4
   ],
   "Theta splits": 3,
   "Phi splits": 3,
-  "Refinement": 1
+  "Refinement": 0
 }

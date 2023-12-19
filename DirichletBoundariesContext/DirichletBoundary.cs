@@ -81,18 +81,17 @@ public class DirichletBoundaryHandler(SphereMeshParameters parameters)
         // return set.OrderBy(b => b.Node);
 
         var skip = parameters.Radius.Count;
-        var capacity = parameters.ThetaSplits * (parameters.PhiSplits - 1) * 2;
-        var list = new List<DirichletBoundary>
-        {
-            new(0, 0.0),
-            new(parameters.Radius.Count - 1, 0.0)
-        };
+        List<DirichletBoundary> list = [new(0, 0.0), new(parameters.Radius.Count, 0.0)];
 
-        for (int i = 0; i < capacity / 2; i++)
+        for (int i = 0; i < parameters.PhiSplits - 1; i++)
         {
-            list.Add(new(skip + i, 0.0));
-            list.Add(new(parameters.ThetaSplits * (parameters.PhiSplits - 1) * (parameters.Radius.Count - 1) + i + skip,
-                0.0));
+            for (int j = 0; j < parameters.ThetaSplits; j++)
+            {
+                list.Add(new(j + i * parameters.ThetaSplits * parameters.Radius.Count + skip, 0.0));
+                list.Add(new(
+                    j + parameters.ThetaSplits * (parameters.Radius.Count - 1) +
+                    i * parameters.ThetaSplits * parameters.Radius.Count + skip, 0.0));
+            }
         }
 
         return list.OrderBy(b => b.Node);

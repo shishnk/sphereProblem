@@ -220,6 +220,8 @@ public class CGMCholesky : IterativeSolver
             }
 
             sw.Stop();
+            
+            // Console.WriteLine($"Residual = {(_matrix * _solution - _vector).Norm()}"); 
 
             _runningTime = sw.Elapsed;
         }
