@@ -13,14 +13,18 @@ with open('elements', 'r') as file:
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
+colors = ['blue', 'yellow'] 
+
 for t_points in tetrahedron_points:
+    area = t_points[4]  
+    color = colors[area]
     Z = np.array([
         [points[t_points[0]], points[t_points[1]], points[t_points[2]]],
         [points[t_points[0]], points[t_points[1]], points[t_points[3]]],
         [points[t_points[0]], points[t_points[2]], points[t_points[3]]],
         [points[t_points[1]], points[t_points[2]], points[t_points[3]]]
     ])
-    ax.add_collection3d(Poly3DCollection(Z, facecolors='cyan', linewidths=1, edgecolors='r', alpha=.25))
+    ax.add_collection3d(Poly3DCollection(Z, facecolors=color, linewidths=1, edgecolors='r', alpha=.25))
 
 ax.scatter(points[:, 0], points[:, 1], points[:, 2])
 

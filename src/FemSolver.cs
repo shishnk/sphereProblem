@@ -94,6 +94,7 @@ public class FemSolver
         for (int ielem = 0; ielem < _assembler.Mesh.Elements.Count; ielem++)
         {
             var element = _assembler.Mesh.Elements[ielem];
+            var lambda = element.Lambda;
 
             _assembler.AssemblyLocalMatrices(ielem);
             _assembler.AssemblyVector(ielem, _f);
@@ -103,7 +104,7 @@ public class FemSolver
                 for (int j = 0; j < _assembler.Basis.Size; j++)
                 {
                     _assembler.FillGlobalMatrix(element[i], element[j],
-                        _assembler.StiffnessMatrix[i, j]);
+                        lambda * _assembler.StiffnessMatrix[i, j]);
                 }
             }
         }
@@ -113,18 +114,12 @@ public class FemSolver
     {
         Span<int> checkBc = stackalloc int[_assembler.Mesh.Points.Count];
         checkBc.Fill(-1);
-
-        var boundariesArray = Enumerable.Range(0, _assembler.Mesh.Points.Count)
-            .Select(i => new { Node = i, Value = _u(_assembler.Mesh.Points[i]) })
-            .Where(node => node.Node != 7)
-            .ToArray();
-
-        // var boundariesArray = _boundaries.ToArray();
+        var boundariesArray = _boundaries.ToArray();
 
         for (int i = 0; i < boundariesArray.Length; i++)
         {
             checkBc[boundariesArray[i].Node] = i;
-            // boundariesArray[i].Value = _u(_assembler.Mesh.Points[boundariesArray[i].Node]);
+            boundariesArray[i].Value = _u(_assembler.Mesh.Points[boundariesArray[i].Node]);
         }
 
         // for (int i = 0, k = boundariesArray.Length - 1;

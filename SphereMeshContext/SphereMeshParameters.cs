@@ -17,23 +17,29 @@ public class SphereMeshParameters
         get => _radius;
         private init => _radius = (value as List<double>)!;
     }
+    
+    public IReadOnlyList<double> NotChangedRadius { get; }
 
     [JsonPropertyName("Theta splits")]
     public int ThetaSplits { get; }
 
     [JsonPropertyName("Phi splits")]
     public int PhiSplits { get; }
+    
+    public IReadOnlyList<double> Properties { get; }
 
     [JsonConstructor]
     public SphereMeshParameters(Point3D center, List<double> radius,
         int thetaSplits,
         int phiSplits,
-        int refinement)
+        int refinement, IReadOnlyList<double> properties)
     {
         Center = center;
         Radius = radius;
+        NotChangedRadius = radius.ToList();
         ThetaSplits = thetaSplits * (refinement + 1);
         PhiSplits = phiSplits * (refinement + 1);
+        Properties = properties;
         InsureRefinement(refinement);
     }
 

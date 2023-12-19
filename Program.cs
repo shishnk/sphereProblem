@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using SphereProblem;
+﻿using SphereProblem;
 using SphereProblem.DirichletBoundariesContext;
 using SphereProblem.SphereMeshContext;
 
@@ -18,10 +17,10 @@ using SphereProblem.SphereMeshContext;
 // femSolver.CalculateError();
 
 // var meshParameters = SphereMeshParameters.ReadFromJsonFile("InputParameters/SphereMeshParameters.json");
-var meshParameters = new SphereMeshParameters((0, 0, 0), [1, 2, 3], 3, 3, 0);
+var meshParameters = new SphereMeshParameters((0, 0, 0), [1, 2, 3], 3, 3, 1, properties:[1.0, 2.0]);
 var mesh2 = new SphereMeshManager(new LinearSphereMesh3DBuilder(meshParameters)).GetMeshInstance();
 var boundaryHandler = new DirichletBoundaryHandler(meshParameters);
-var dirichletBoundaries = boundaryHandler.Handle();
+var dirichletBoundaries = boundaryHandler.Handle().ToArray();
 
 FemSolver femSolver2 = FemSolver.CreateBuilder()
     .SetTest(("point.X + point.Y + point.Z", "0.0"))
@@ -29,5 +28,5 @@ FemSolver femSolver2 = FemSolver.CreateBuilder()
     .SetIterativeSolver(new CGMCholesky(1000, 1E-15))
     .SetDirichletBoundaries(dirichletBoundaries);
 
-femSolver2.Solve();
-femSolver2.CalculateError();
+// femSolver2.Solve();
+// femSolver2.CalculateError();
