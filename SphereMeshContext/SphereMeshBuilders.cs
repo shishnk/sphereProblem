@@ -13,19 +13,19 @@ public abstract class BaseSphereMeshBuilder(SphereMeshParameters parameters)
     public abstract void CreatePoints();
     public abstract void CreateElements();
 
-    protected void CreatePointsInner(int phiSplits, int thetaSplits)
+    protected void CreatePointsInner(int thetaSplits, int phiSplits)
     {
-        _points = new Point3D[(phiSplits - 1) * thetaSplits * parameters.Radius.Count + parameters.Radius.Count];
+        _points = new Point3D[(phiSplits - 1) * thetaSplits * parameters.Radius.Count];
 
         var phi = Math.PI / 4 / (phiSplits - 1);
         var theta = Math.PI / 2 / (thetaSplits - 1);
 
-        for (int t = parameters.Radius.Count - 1, idx = 0; t >= 0; t--, idx++)
-        {
-            _points[idx] = parameters.Center + parameters.Radius[t] * Point3D.UnitZ;
-        }
+        // for (int t = parameters.Radius.Count - 1, idx = 0; t >= 0; t--, idx++)
+        // {
+        //     _points[idx] = parameters.Center + parameters.Radius[t] * Point3D.UnitZ;
+        // }
 
-        for (int i = 1, idx = parameters.Radius.Count; i < phiSplits; i++)
+        for (int i = 1, idx = 0; i < phiSplits; i++)
         {
             for (int k = parameters.Radius.Count - 1; k >= 0; k--)
             {
@@ -37,9 +37,9 @@ public abstract class BaseSphereMeshBuilder(SphereMeshParameters parameters)
                     var y = r * Math.Sin(phi * i) * Math.Sin(j * theta) + parameters.Center.Y;
                     var z = r * Math.Cos(phi * i) + parameters.Center.Z;
 
-                    // var x = phi * i;
-                    // var y = theta * j;
-                    // var z = r;
+                    // var x = theta * j;
+                    // var y = r;
+                    // var z = phi * i;
 
                     _points[idx] = (x, y, z);
                 }
@@ -138,7 +138,7 @@ public abstract class BaseSphereMeshBuilder(SphereMeshParameters parameters)
 
 public class LinearSphereMesh3DBuilder(SphereMeshParameters parameters) : BaseSphereMeshBuilder(parameters)
 {
-    public override void CreatePoints() => CreatePointsInner(parameters.ThetaSplits, parameters.PhiSplits);
+    public override void CreatePoints() => CreatePointsInner(parameters.PhiSplits, parameters.ThetaSplits);
 
     public override void CreateElements()
     {
@@ -159,9 +159,9 @@ public class LinearSphereMesh3DBuilder(SphereMeshParameters parameters) : BaseSp
             _parallelepipeds[i] = new int[parallelepipedSize];
         }
 
-        int skip;
+        int skip = 0;
         var nx = parameters.PhiSplits;
-        var ny = skip = parameters.Radius.Count;
+        var ny = parameters.Radius.Count;
 
         for (int k = 0; k < parameters.ThetaSplits - 2; k++)
         {
@@ -215,27 +215,27 @@ public class LinearSphereMesh3DBuilder(SphereMeshParameters parameters) : BaseSp
             }
         }
 
-        for (int i = 0; i < parameters.Radius.Count - 1; i++)
-        {
-            for (int j = 0; j < parameters.PhiSplits - 1; j++)
-            {
-                prismNodes[0] = j + i * nx + skip;
-                prismNodes[1] = j + 1 + i * nx + skip;
-                prismNodes[2] = i;
-                prismNodes[3] = j + (i + 1) * nx + skip;
-                prismNodes[4] = j + 1 + (i + 1) * nx + skip;
-                prismNodes[5] = i + 1;
-
-                _prisms.Add(prismNodes.ToArray());
-
-                areaNumber = GetArea(i);
-                lambda = parameters.Properties[areaNumber];
-
-                _elements.Add(new([prismNodes[3], prismNodes[4], prismNodes[5], prismNodes[1]], areaNumber, lambda));
-                _elements.Add(new([prismNodes[3], prismNodes[1], prismNodes[5], prismNodes[2]], areaNumber, lambda));
-                _elements.Add(new([prismNodes[0], prismNodes[1], prismNodes[2], prismNodes[3]], areaNumber, lambda));
-            }
-        }
+        // for (int i = 0; i < parameters.Radius.Count - 1; i++)
+        // {
+        //     for (int j = 0; j < parameters.PhiSplits - 1; j++)
+        //     {
+        //         prismNodes[0] = j + i * nx + skip;
+        //         prismNodes[1] = j + 1 + i * nx + skip;
+        //         prismNodes[2] = i;
+        //         prismNodes[3] = j + (i + 1) * nx + skip;
+        //         prismNodes[4] = j + 1 + (i + 1) * nx + skip;
+        //         prismNodes[5] = i + 1;
+        //
+        //         _prisms.Add(prismNodes.ToArray());
+        //
+        //         areaNumber = GetArea(i);
+        //         lambda = parameters.Properties[areaNumber];
+        //
+        //         _elements.Add(new([prismNodes[3], prismNodes[4], prismNodes[5], prismNodes[1]], areaNumber, lambda));
+        //         _elements.Add(new([prismNodes[3], prismNodes[1], prismNodes[5], prismNodes[2]], areaNumber, lambda));
+        //         _elements.Add(new([prismNodes[0], prismNodes[1], prismNodes[2], prismNodes[3]], areaNumber, lambda));
+        //     }
+        // }
 
         return;
 
@@ -293,7 +293,7 @@ public class LinearSphereMesh3DBuilder(SphereMeshParameters parameters) : BaseSp
 
 public class QuadraticSphereMesh3DBuilder(SphereMeshParameters parameters) : BaseSphereMeshBuilder(parameters)
 {
-    public override void CreatePoints() => CreatePointsInner(2 * parameters.ThetaSplits, 2 * parameters.PhiSplits);
+    public override void CreatePoints() => CreatePointsInner(2 * parameters.PhiSplits, 2 * parameters.ThetaSplits);
 
     public override void CreateElements()
     {
