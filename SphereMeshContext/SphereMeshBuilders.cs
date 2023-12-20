@@ -144,8 +144,6 @@ public class LinearSphereMesh3DBuilder(SphereMeshParameters parameters) : BaseSp
     {
         const int parallelepipedSize = 8;
         const int prismSize = 6;
-        int areaNumber;
-        double lambda;
         // _elements = new FiniteElement[(parameters.PhiSplits - 1) * (parameters.ThetaSplits - 1) *
         // (parameters.Radius.Count - 1) * 3 + (parameters.Radius.Count - 1) * (parameters.ThetaSplits - 1) * 3];
         _elements = [];
@@ -190,8 +188,8 @@ public class LinearSphereMesh3DBuilder(SphereMeshParameters parameters) : BaseSp
 
                     _parallelepipeds.Add(parallelepipedNodes.ToArray());
 
-                    areaNumber = GetArea(j);
-                    lambda = parameters.Properties[areaNumber];
+                    var areaNumber = GetArea(j);
+                    var lambda = parameters.Properties[areaNumber];
 
                     _elements.Add(new([
                         parallelepipedNodes[0], parallelepipedNodes[1], parallelepipedNodes[2], parallelepipedNodes[6]

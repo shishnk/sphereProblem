@@ -15,10 +15,17 @@ public class FemSolver
             return this;
         }
 
-        public FemSolverBuilder SetTest((string FieldExpr, string SourceExpr) test)
+        // public FemSolverBuilder SetTest((string FieldExpr, string SourceExpr) test)
+        // {
+        //     _solverFem._u = ExpressionCompiler.CompileToLambda(test.FieldExpr);
+        //     _solverFem._f = ExpressionCompiler.CompileToLambda(test.SourceExpr);
+        //     return this;
+        // }
+
+        public FemSolverBuilder SetTestWithArea(Func<Point3D, int, double> field, Func<Point3D, double> source)
         {
-            _solverFem._u = ExpressionCompiler.CompileToLambda(test.FieldExpr);
-            _solverFem._f = ExpressionCompiler.CompileToLambda(test.SourceExpr);
+            _solverFem._u = field;
+            _solverFem._f = source;
             return this;
         }
 
@@ -41,7 +48,7 @@ public class FemSolver
     private IterativeSolver _iterativeSolver = null!;
     private SystemAssembler _assembler = null!;
     private Func<Point3D, double> _f = null!;
-    private Func<Point3D, double> _u = null!;
+    private Func<Point3D, int, double> _u = null!;
     private IEnumerable<DirichletBoundary> _boundaries = null!;
 
     public static FemSolverBuilder CreateBuilder() => new();
@@ -64,20 +71,40 @@ public class FemSolver
 
         _iterativeSolver.SetMatrixEx(_assembler.GlobalMatrix!).SetVectorEx(_assembler.Vector);
         _iterativeSolver.Compute();
+        //
+        // for (int i = 0; i < _iterativeSolver.Solution!.Value.Length; i++)
+        // {
+        //     Console.WriteLine(
+        //         $" {i} Point {_assembler.Mesh.Points[i]} -- {_iterativeSolver.Solution.Value[i]}, exact -- {_u(_assembler.Mesh.Points[i])}");
+        // }
 
-        for (int i = 0; i < _iterativeSolver.Solution!.Value.Length; i++)
+        var exact = (from element in _assembler.Mesh.Elements
+            from node in element.Nodes
+            select (_u(_assembler.Mesh.Points[node], element.AreaNumber), node)).ToList();
+
+        exact = exact.DistinctBy(tuple => tuple.Item2).OrderBy(tuple => tuple.Item2).ToList();
+
+        var approx = _iterativeSolver.Solution!.Value.ToList();
+
+        var result = exact.Zip(approx, (v1, v2) => (v2, v1.Item1));
+
+        foreach (var (v1, v2) in result)
         {
-            Console.WriteLine(
-                $" {i} Point {_assembler.Mesh.Points[i]} -- {_iterativeSolver.Solution.Value[i]}, exact -- {_u(_assembler.Mesh.Points[i])}");
+            Console.WriteLine($"{v1} ------------ {v2} ");
         }
+
+        Console.WriteLine("---------------------------");
+
+        // CalculateError();
+        CalculateErrorWithBreaking(approx, exact.Select(tuple => tuple.Item1).ToList());
     }
 
-    public void CalculateError()
-    {
-        var exactValues = _assembler.Mesh.Points.Select(p => _u(p)).ToArray();
-        var errors = exactValues.Select((v, i) => Math.Abs(v - _iterativeSolver.Solution!.Value[i])).ToArray();
-        Console.WriteLine($"RMS = {Math.Sqrt(errors.Sum(e => e * e) / errors.Length)}");
-    }
+    // public void CalculateError()
+    // {
+    //     var exactValues = _assembler.Mesh.Points.Select(p => _u(p)).ToArray();
+    //     var errors = exactValues.Select((v, i) => Math.Abs(v - _iterativeSolver.Solution!.Value[i])).ToArray();
+    //     Console.WriteLine($"RMS = {Math.Sqrt(errors.Sum(e => e * e) / errors.Length)}");
+    // }
 
     private void EnsureInitialization()
     {
@@ -119,7 +146,14 @@ public class FemSolver
         for (int i = 0; i < boundariesArray.Length; i++)
         {
             checkBc[boundariesArray[i].Node] = i;
-            boundariesArray[i].Value = _u(_assembler.Mesh.Points[boundariesArray[i].Node]);
+            boundariesArray[i].Value = boundariesArray[i].Type switch
+            {
+                BoundaryType.External => 10.0,
+                BoundaryType.Internal => 0.0,
+                BoundaryType.NeedExact => _u(_assembler.Mesh.Points[boundariesArray[i].Node],
+                    boundariesArray[i].AreaNumber),
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
 
         // for (int i = 0, k = boundariesArray.Length - 1;
@@ -129,6 +163,7 @@ public class FemSolver
         //     boundariesArray[i].Value = 10.0;
         //     boundariesArray[k].Value = 0.0;
         // }
+
 
         for (int i = 0; i < _assembler.Mesh.Points.Count; i++)
         {
@@ -164,5 +199,23 @@ public class FemSolver
                 }
             }
         }
+    }
+
+    private void CalculateErrorWithBreaking(IReadOnlyList<double> approx, IReadOnlyList<double> exact)
+    {
+        var error = new double[approx.Count];
+
+        for (int i = 0; i < error.Length; i++)
+        {
+            error[i] = Math.Abs(approx[i] - exact[i]);
+        }
+
+        // Array.ForEach(error, Console.WriteLine);
+
+        var sum = error.Sum(t => t * t);
+
+        sum = Math.Sqrt(sum / _assembler.Mesh.Points.Count);
+
+        Console.WriteLine($"rms = {sum}");
     }
 }
