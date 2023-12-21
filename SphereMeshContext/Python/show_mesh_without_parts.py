@@ -36,10 +36,10 @@ for p_points in prism_points:
     ])
     ax.add_collection3d(Poly3DCollection(Z, facecolors='cyan', linewidths=1, edgecolors='r', alpha=0.01))
 
-ax.scatter(points[:, 0],points[:, 1], points[:, 2])
+ax.scatter(points[:, 0],points[:, 1], points[:, 2], '.', s = 0.8)
 
 for i in range(len(points)):
-    ax.text(points[i, 0], points[i, 1], points[i, 2], str(i))
+    ax.text(points[i, 0], points[i, 1], points[i, 2], str(i), fontsize=8)
 
 ax.set_xlabel('Ось X')
 ax.set_ylabel('Ось Y')

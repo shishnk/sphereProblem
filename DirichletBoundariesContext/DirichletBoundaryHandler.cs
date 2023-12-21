@@ -19,8 +19,10 @@ public record struct DirichletBoundary(int Node, double Value, BoundaryType Type
 /// Sets the first bounds on all boundaries of the region without specifying explicit parameters.
 /// </summary>
 /// <param name="parameters">Mesh parameters</param>
-public class DirichletBoundaryHandler(SphereMeshParameters parameters)
+public class DirichletBoundaryHandler(SphereMeshParameters parameters, bool isQuadratic)
 {
+    private bool _isQuadratic = isQuadratic;
+    
     /// <summary>
     /// Process dirichlet boundaries
     /// </summary>
@@ -90,76 +92,79 @@ public class DirichletBoundaryHandler(SphereMeshParameters parameters)
         //
         // return set.OrderBy(b => b.Node);
 
-        var set = new HashSet<DirichletBoundary>(
-            parameters.ThetaSplits * parameters.PhiSplits * parameters.Radius.Count);
+        // need bottom, back and front faces
+        var set = new HashSet<DirichletBoundary>();
 
         // faces in spherical coordinates x -- phi, y -- r, z -- theta
         // have used symmetry (1/8 sphere) and one exact face
         // Bottom face
+        var phiSplits = _isQuadratic ? parameters.PhiSplits * 2 - 1 : parameters.PhiSplits;
+        var thetaSplits = _isQuadratic ? parameters.ThetaSplits * 2 - 2 : parameters.ThetaSplits;
+        
         for (int i = 0; i < parameters.Radius.Count; i++)
         {
-            for (int j = 0; j < parameters.PhiSplits; j++)
+            for (int j = 0; j < phiSplits; j++)
             {
                 var area = GetArea(i);
-                set.Add(new(j + i * parameters.PhiSplits, 0.0, BoundaryType.NeedExact, area));
+                set.Add(new(j + i * phiSplits, 0.0, BoundaryType.NeedExact, area));
             }
         }
 
-        // // Top face
-        // for (int i = 0; i < parameters.Radius.Count; i++)
-        // {
-        //     for (int j = 0; j < parameters.PhiSplits; j++)
-        //     {
-        //         var area = GetArea(i);
-        //         set.Add(new(
-        //             j + (parameters.ThetaSplits - 2) * parameters.Radius.Count * parameters.PhiSplits +
-        //             i * parameters.PhiSplits,
-        //             0.0, BoundaryType.NeedExact, area));
-        //     }
-        // }
+        // Top face
+        for (int i = 0; i < parameters.Radius.Count; i++)
+        {
+            for (int j = 0; j < phiSplits; j++)
+            {
+                var area = GetArea(i);
+                set.Add(new(
+                    j + (thetaSplits - 2) * parameters.Radius.Count * phiSplits +
+                    i * phiSplits,
+                    0.0, BoundaryType.NeedExact, area));
+            }
+        }
 
         // Back face
-        for (int i = 0; i < parameters.ThetaSplits - 1; i++)
+        for (int i = 0; i < thetaSplits - 1; i++)
         {
-            for (int j = 0; j < parameters.PhiSplits; j++)
+            for (int j = 0; j < phiSplits; j++)
             {
-                set.Add(new(j + i * parameters.Radius.Count * parameters.PhiSplits, 0.0, BoundaryType.External, 1));
+                set.Add(new(j + i * parameters.Radius.Count * phiSplits, 0.0, BoundaryType.External, 1));
             }
         }
 
         // Front face
-        for (int i = 0; i < parameters.ThetaSplits - 1; i++)
+        for (int i = 0; i < thetaSplits - 1; i++)
         {
-            for (int j = 0; j < parameters.PhiSplits; j++)
+            for (int j = 0; j < phiSplits; j++)
             {
                 set.Add(new(
-                    parameters.PhiSplits * (parameters.Radius.Count - 1) + j +
-                    i * parameters.Radius.Count * parameters.PhiSplits, 0.0, BoundaryType.Internal, 0));
+                    phiSplits * (parameters.Radius.Count - 1) + j +
+                    i * parameters.Radius.Count * phiSplits, 0.0, BoundaryType.Internal, 0));
             }
         }
 
-        // // Left face
-        // for (int i = 0; i < parameters.ThetaSplits - 1; i++)
-        // {
-        //     for (int j = 0; j < parameters.Radius.Count; j++)
-        //     {
-        //         var area = GetArea(j);
-        //         set.Add(new(j * parameters.PhiSplits +
-        //                     i * parameters.PhiSplits * parameters.Radius.Count, 0.0, BoundaryType.NeedExact, area));
-        //     }
-        // }
+        // Left face
+        for (int i = 0; i < thetaSplits - 1; i++)
+        {
+            for (int j = 0; j < parameters.Radius.Count; j++)
+            {
+                var area = GetArea(j);
+                set.Add(new(j * phiSplits +
+                            i * phiSplits * parameters.Radius.Count, 0.0, BoundaryType.NeedExact, area));
+            }
+        }
 
-        // // Right face
-        // for (int i = 0; i < parameters.ThetaSplits - 1; i++)
-        // {
-        //     for (int j = 0; j < parameters.Radius.Count; j++)
-        //     {
-        //         var area = GetArea(j);
-        //         set.Add(new(
-        //             j * parameters.PhiSplits + (parameters.PhiSplits - 1) +
-        //             i * parameters.PhiSplits * parameters.Radius.Count, 0.0, BoundaryType.NeedExact, area));
-        //     }
-        // }
+        // Right face
+        for (int i = 0; i < thetaSplits - 1; i++)
+        {
+            for (int j = 0; j < parameters.Radius.Count; j++)
+            {
+                var area = GetArea(j);
+                set.Add(new(
+                    j * phiSplits + (phiSplits - 1) +
+                    i * phiSplits * parameters.Radius.Count, 0.0, BoundaryType.NeedExact, area));
+            }
+        }
 
         return set.OrderBy(b => b.Node);
 

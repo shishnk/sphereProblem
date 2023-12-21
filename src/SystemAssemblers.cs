@@ -4,7 +4,7 @@ using SphereProblem.SphereMeshContext;
 
 namespace SphereProblem;
 
-public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator integrator)
+public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator integrator, bool useLinearShapeFunc = false)
 {
     /// <summary>
     ///  Cache contains data for assembler and help methods.

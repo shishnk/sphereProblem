@@ -9,6 +9,7 @@ namespace SphereProblem.SphereMeshContext;
 public class SphereMeshParameters
 {
     private readonly List<double> _radius = null!;
+    private bool _isQuadratic;
 
     public Point3D Center { get; }
 
@@ -32,7 +33,7 @@ public class SphereMeshParameters
     public SphereMeshParameters(Point3D center, List<double> radius,
         int thetaSplits,
         int phiSplits,
-        int refinement, IReadOnlyList<double> properties)
+        int refinement, IReadOnlyList<double> properties, bool isQuadratic = false)
     {
         Center = center;
         Radius = radius;
@@ -40,11 +41,14 @@ public class SphereMeshParameters
         ThetaSplits = thetaSplits * (refinement + 1);
         PhiSplits = phiSplits * (refinement + 1);
         Properties = properties;
+        _isQuadratic = isQuadratic;
         InsureRefinement(refinement);
     }
 
     private void InsureRefinement(int refinement)
     {
+        if (_isQuadratic) refinement++;
+        
         for (int i = 0; i < refinement; i++)
         {
             var count = _radius.Count - 1;

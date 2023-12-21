@@ -13,6 +13,7 @@ public abstract class BaseSphereMeshBuilder(SphereMeshParameters parameters)
     public abstract void CreatePoints();
     public abstract void CreateElements();
 
+    // TODO: change theta and phi places
     protected void CreatePointsInner(int thetaSplits, int phiSplits)
     {
         _points = new Point3D[(phiSplits - 1) * thetaSplits * parameters.Radius.Count];
@@ -33,13 +34,13 @@ public abstract class BaseSphereMeshBuilder(SphereMeshParameters parameters)
 
                 for (int j = 0; j < thetaSplits; j++, idx++)
                 {
-                    var x = r * Math.Sin(phi * i) * Math.Cos(j * theta) + parameters.Center.X;
-                    var y = r * Math.Sin(phi * i) * Math.Sin(j * theta) + parameters.Center.Y;
-                    var z = r * Math.Cos(phi * i) + parameters.Center.Z;
+                    // var x = r * Math.Sin(phi * i) * Math.Cos(j * theta) + parameters.Center.X;
+                    // var y = r * Math.Sin(phi * i) * Math.Sin(j * theta) + parameters.Center.Y;
+                    // var z = r * Math.Cos(phi * i) + parameters.Center.Z;
 
-                    // var x = theta * j;
-                    // var y = r;
-                    // var z = phi * i;
+                    var x = theta * j;
+                    var y = r;
+                    var z = phi * i;
 
                     _points[idx] = (x, y, z);
                 }
@@ -212,7 +213,7 @@ public class LinearSphereMesh3DBuilder(SphereMeshParameters parameters) : BaseSp
                 }
             }
         }
-
+        // creating prisms, may be later (working algorithm)
         // for (int i = 0; i < parameters.Radius.Count - 1; i++)
         // {
         //     for (int j = 0; j < parameters.PhiSplits - 1; j++)
@@ -291,59 +292,127 @@ public class LinearSphereMesh3DBuilder(SphereMeshParameters parameters) : BaseSp
 
 public class QuadraticSphereMesh3DBuilder(SphereMeshParameters parameters) : BaseSphereMeshBuilder(parameters)
 {
-    public override void CreatePoints() => CreatePointsInner(2 * parameters.PhiSplits, 2 * parameters.ThetaSplits);
+    public override void CreatePoints() =>
+        CreatePointsInner(2 * parameters.PhiSplits - 1, 2 * parameters.ThetaSplits - 2);
 
     public override void CreateElements()
     {
         const int localSize = 3;
         const int parallelepipedSize = 27;
-        const int prismSize = 14;
+        // const int prismSize = 14;
         // _elements = new FiniteElement[(parameters.PhiSplits - 1) * (parameters.ThetaSplits - 1) *
         // (parameters.Radius.Count - 1) * 3 + (parameters.Radius.Count - 1) * (parameters.ThetaSplits - 1) * 3];
         _elements = [];
         _parallelepipeds = [];
-        _prisms = [];
+        // _prisms = [];
         Span<int> parallelepipedNodes = stackalloc int[parallelepipedSize];
-        Span<int> prismNodes = stackalloc int[prismSize];
+        // Span<int> prismNodes = stackalloc int[prismSize];
 
         for (var i = 0; i < _parallelepipeds.Count; i++)
         {
             _parallelepipeds[i] = new int[parallelepipedSize];
         }
 
-        var skip = parameters.Radius.Count;
+        var nx = parameters.PhiSplits - 1;
+        var ny = parameters.Radius.Count / (localSize - 1);
+        var yPadding = nx * (localSize - 1) + 1;
+        var zPadding = (nx * (localSize - 1) + 1) * (ny * (localSize - 1) + 1);
 
         for (int k = 0; k < parameters.ThetaSplits - 2; k++)
         {
-            for (int j = 0; j < parameters.Radius.Count - 1; j++)
+            for (int j = 0; j < ny; j++)
             {
                 for (int i = 0; i < parameters.PhiSplits - 1; i++)
                 {
+                    var ox = i * (localSize - 1);
+                    var oy = yPadding * (localSize - 1) * j;
+                    var oz = zPadding * (localSize - 1) * k;
+
+                    var op = ox + oy + oz;
+
                     for (int c = 0; c < parallelepipedSize; c++)
                     {
                         var lx = c % localSize;
                         var ly = c / localSize % localSize;
                         var lz = c / (localSize * localSize);
 
-                        var ox = i * (localSize - 1) + lx;
-                        var oy = ly * ((localSize - 1) * (parameters.PhiSplits - 1) + 1) +
-                                 j * ((localSize - 1) * (parameters.PhiSplits - 1) + 1) * (localSize - 1);
-                        var oz = lz * ((localSize - 1) * (parameters.PhiSplits - 1) + 1) *
-                                 ((localSize - 1) * (parameters.Radius.Count - 1) + 1) +
-                                 k * ((localSize - 1) * (parameters.PhiSplits - 1) + 1) *
-                                 ((localSize - 1) * (parameters.Radius.Count - 1) + 1) * (localSize - 1);
-
-                        parallelepipedNodes[c] = ox + oy + oz + skip;
+                        parallelepipedNodes[c] = op + lx + ly * yPadding + lz * zPadding;
                     }
+
+                    _parallelepipeds.Add([
+                        parallelepipedNodes[0], parallelepipedNodes[2], parallelepipedNodes[6], parallelepipedNodes[8],
+                        parallelepipedNodes[18], parallelepipedNodes[20], parallelepipedNodes[24],
+                        parallelepipedNodes[26]
+                    ]);
+
+                    var area = GetArea(parallelepipedNodes[3]); // take middle X face point
+                    var lambda = parameters.Properties[area];
+
+                    _elements.Add(new(new[]
+                    {
+                        // 0, 2, 6, 24 -- vertices
+                        parallelepipedNodes[0], parallelepipedNodes[2], parallelepipedNodes[6], parallelepipedNodes[24],
+                        parallelepipedNodes[1], parallelepipedNodes[3], parallelepipedNodes[12], parallelepipedNodes[4],
+                        parallelepipedNodes[13], parallelepipedNodes[15]
+                    }, area, lambda));
+                    _elements.Add(new(new[]
+                    {
+                        // 0, 2, 24, 18
+                        parallelepipedNodes[0], parallelepipedNodes[2], parallelepipedNodes[24],
+                        parallelepipedNodes[18],
+                        parallelepipedNodes[1], parallelepipedNodes[12], parallelepipedNodes[9],
+                        parallelepipedNodes[13], parallelepipedNodes[10], parallelepipedNodes[21]
+                    }, area, lambda));
+                    _elements.Add(new(new[]
+                    {
+                        // 2, 8, 6, 24
+                        parallelepipedNodes[2], parallelepipedNodes[8], parallelepipedNodes[6], parallelepipedNodes[24],
+                        parallelepipedNodes[5], parallelepipedNodes[4], parallelepipedNodes[13], parallelepipedNodes[7],
+                        parallelepipedNodes[16], parallelepipedNodes[15]
+                    }, area, lambda));
+
+                    _elements.Add(new(new[]
+                    {
+                        // 2, 26, 24, 20
+                        parallelepipedNodes[2], parallelepipedNodes[26], parallelepipedNodes[24],
+                        parallelepipedNodes[20],
+                        parallelepipedNodes[14], parallelepipedNodes[13], parallelepipedNodes[11],
+                        parallelepipedNodes[25], parallelepipedNodes[23], parallelepipedNodes[22]
+                    }, area, lambda));
+                    _elements.Add(new(new[]
+                    {
+                        // 2, 8, 24, 26
+                        parallelepipedNodes[2], parallelepipedNodes[8], parallelepipedNodes[24],
+                        parallelepipedNodes[26],
+                        parallelepipedNodes[5], parallelepipedNodes[13], parallelepipedNodes[14],
+                        parallelepipedNodes[16], parallelepipedNodes[17], parallelepipedNodes[25]
+                    }, area, lambda));
+                    _elements.Add(new(new[]
+                    {
+                        // 2, 24, 18, 20
+                        parallelepipedNodes[2], parallelepipedNodes[24], parallelepipedNodes[18],
+                        parallelepipedNodes[20],
+                        parallelepipedNodes[13], parallelepipedNodes[10], parallelepipedNodes[11],
+                        parallelepipedNodes[21], parallelepipedNodes[22], parallelepipedNodes[19]
+                    }, area, lambda));
                 }
             }
         }
+
+        return;
+
+        int GetArea(int i)
+        {
+            var r = _points[i].Y; // take point from parallelepiped such as radius
+            return r > parameters.NotChangedRadius[1] ? 1 : 0;
+        }
     }
 
+    // TODO: create common method for both builders
     protected override void WriteToFile()
     {
         using StreamWriter sw1 = new("../../../SphereMeshContext/Python/points"),
-            sw2 = new("../../../SphereMeshContext/Python/prisms"),
+            // sw2 = new("../../../SphereMeshContext/Python/prisms"),
             sw3 = new("../../../SphereMeshContext/Python/parallelepipeds"),
             sw4 = new("../../../SphereMeshContext/Python/elements");
 
@@ -352,15 +421,15 @@ public class QuadraticSphereMesh3DBuilder(SphereMeshParameters parameters) : Bas
             sw1.WriteLine(point.ToString());
         }
 
-        foreach (var node in _prisms!)
-        {
-            foreach (var i in node)
-            {
-                sw2.Write(i + " ");
-            }
-
-            sw2.WriteLine();
-        }
+        // foreach (var node in _prisms!)
+        // {
+        //     foreach (var i in node)
+        //     {
+        //         sw2.Write(i + " ");
+        //     }
+        //
+        //     sw2.WriteLine();
+        // }
 
         foreach (var node in _parallelepipeds!)
         {
@@ -374,11 +443,12 @@ public class QuadraticSphereMesh3DBuilder(SphereMeshParameters parameters) : Bas
 
         foreach (var element in _elements)
         {
-            foreach (var node in element.Nodes)
+            foreach (var node in element.Nodes.Take(4)) // first 4 geometric nodes
             {
                 sw4.Write(node + " ");
             }
-
+            
+            sw4.Write(element.AreaNumber);
             sw4.WriteLine();
         }
     }

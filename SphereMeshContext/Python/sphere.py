@@ -11,9 +11,9 @@ z_values = [float(point[2]) for point in points]
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
-ax.scatter(x_values, y_values, z_values)
+ax.scatter(x_values, y_values, z_values, '.', s = 1)
 
 for i in range(len(points)):
-    ax.text(x_values[i], y_values[i], z_values[i], str(i))
+    ax.text(x_values[i], y_values[i], z_values[i], str(i),  fontsize=8 )
 
 plt.show()
