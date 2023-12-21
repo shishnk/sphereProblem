@@ -21,8 +21,6 @@ public record struct DirichletBoundary(int Node, double Value, BoundaryType Type
 /// <param name="parameters">Mesh parameters</param>
 public class DirichletBoundaryHandler(SphereMeshParameters parameters, bool isQuadratic)
 {
-    private bool _isQuadratic = isQuadratic;
-    
     /// <summary>
     /// Process dirichlet boundaries
     /// </summary>
@@ -98,8 +96,8 @@ public class DirichletBoundaryHandler(SphereMeshParameters parameters, bool isQu
         // faces in spherical coordinates x -- phi, y -- r, z -- theta
         // have used symmetry (1/8 sphere) and one exact face
         // Bottom face
-        var phiSplits = _isQuadratic ? parameters.PhiSplits * 2 - 1 : parameters.PhiSplits;
-        var thetaSplits = _isQuadratic ? parameters.ThetaSplits * 2 - 2 : parameters.ThetaSplits;
+        var phiSplits = isQuadratic ? parameters.PhiSplits * 2 - 1 : parameters.PhiSplits;
+        var thetaSplits = isQuadratic ? parameters.ThetaSplits * 2 - 2 : parameters.ThetaSplits;
         
         for (int i = 0; i < parameters.Radius.Count; i++)
         {
@@ -110,18 +108,18 @@ public class DirichletBoundaryHandler(SphereMeshParameters parameters, bool isQu
             }
         }
 
-        // Top face
-        for (int i = 0; i < parameters.Radius.Count; i++)
-        {
-            for (int j = 0; j < phiSplits; j++)
-            {
-                var area = GetArea(i);
-                set.Add(new(
-                    j + (thetaSplits - 2) * parameters.Radius.Count * phiSplits +
-                    i * phiSplits,
-                    0.0, BoundaryType.NeedExact, area));
-            }
-        }
+        // // Top face
+        // for (int i = 0; i < parameters.Radius.Count; i++)
+        // {
+        //     for (int j = 0; j < phiSplits; j++)
+        //     {
+        //         var area = GetArea(i);
+        //         set.Add(new(
+        //             j + (thetaSplits - 2) * parameters.Radius.Count * phiSplits +
+        //             i * phiSplits,
+        //             0.0, BoundaryType.NeedExact, area));
+        //     }
+        // }
 
         // Back face
         for (int i = 0; i < thetaSplits - 1; i++)
@@ -142,29 +140,29 @@ public class DirichletBoundaryHandler(SphereMeshParameters parameters, bool isQu
                     i * parameters.Radius.Count * phiSplits, 0.0, BoundaryType.Internal, 0));
             }
         }
-
-        // Left face
-        for (int i = 0; i < thetaSplits - 1; i++)
-        {
-            for (int j = 0; j < parameters.Radius.Count; j++)
-            {
-                var area = GetArea(j);
-                set.Add(new(j * phiSplits +
-                            i * phiSplits * parameters.Radius.Count, 0.0, BoundaryType.NeedExact, area));
-            }
-        }
-
-        // Right face
-        for (int i = 0; i < thetaSplits - 1; i++)
-        {
-            for (int j = 0; j < parameters.Radius.Count; j++)
-            {
-                var area = GetArea(j);
-                set.Add(new(
-                    j * phiSplits + (phiSplits - 1) +
-                    i * phiSplits * parameters.Radius.Count, 0.0, BoundaryType.NeedExact, area));
-            }
-        }
+        //
+        // // Left face
+        // for (int i = 0; i < thetaSplits - 1; i++)
+        // {
+        //     for (int j = 0; j < parameters.Radius.Count; j++)
+        //     {
+        //         var area = GetArea(j);
+        //         set.Add(new(j * phiSplits +
+        //                     i * phiSplits * parameters.Radius.Count, 0.0, BoundaryType.NeedExact, area));
+        //     }
+        // }
+        //
+        // // Right face
+        // for (int i = 0; i < thetaSplits - 1; i++)
+        // {
+        //     for (int j = 0; j < parameters.Radius.Count; j++)
+        //     {
+        //         var area = GetArea(j);
+        //         set.Add(new(
+        //             j * phiSplits + (phiSplits - 1) +
+        //             i * phiSplits * parameters.Radius.Count, 0.0, BoundaryType.NeedExact, area));
+        //     }
+        // }
 
         return set.OrderBy(b => b.Node);
 

@@ -19,24 +19,24 @@ using SphereProblem.SphereMeshContext;
 
 // var meshParameters = SphereMeshParameters.ReadFromJsonFile("InputParameters/SphereMeshParameters.json");
 var meshParameters =
-    new SphereMeshParameters(center: (0, 0, 0), radius: [1, 2, 3], 20,20, refinement: 0, properties: [1.0, 1.0],
+    new SphereMeshParameters(center: (0, 0, 0), radius: [1, 2, 3], 4,3, refinement: 3, properties: [1.0, 2.0],
         isQuadratic: true);
 var mesh2 = new SphereMeshManager(new QuadraticSphereMesh3DBuilder(meshParameters)).GetMeshInstance();
 var boundaryHandler = new DirichletBoundaryHandler(meshParameters, isQuadratic: true);
 var dirichletBoundaries = boundaryHandler.Handle();
 
 FemSolver femSolver2 = FemSolver.CreateBuilder()
-    .SetTest(("point.X * point.X + point.Y * point.Y + point.Z * point.Z", "-6.0"))
-    // .SetTestWithArea((point, areaNumber) =>
-            // areaNumber == 1
-                // ? 2.0 / 19.0 * (point.X * point.X + point.Y * point.Y + point.Z * point.Z) *
-                  // (point.X * point.X + point.Y * point.Y + point.Z * point.Z) +
-                  // 28.0 / 19.0
-                // : 4.0 / 19.0 * (point.X * point.X + point.Y * point.Y + point.Z * point.Z) *
-                  // (point.X * point.X + point.Y * point.Y + point.Z * point.Z) -
-                  // 4.0 / 19.0,
-        // point => -80.0 / 19.0 * (point.X * point.X + point.Y * point.Y + point.Z * point.Z))
-    .SetAssembler(new(new QuadraticBasis3D(), mesh2, new(Quadratures.TetrahedronOrder4()), useLinearShapeFunc: false))
+    // .SetTest(("point.X * point.X + point.Y * point.Y + point.Z * point.Z", "-6.0"))
+    .SetTestWithArea((point, areaNumber) =>
+            areaNumber == 1
+                ? 2.0 / 19.0 * (point.X * point.X + point.Y * point.Y + point.Z * point.Z) *
+                  (point.X * point.X + point.Y * point.Y + point.Z * point.Z) +
+                  28.0 / 19.0
+                : 4.0 / 19.0 * (point.X * point.X + point.Y * point.Y + point.Z * point.Z) *
+                  (point.X * point.X + point.Y * point.Y + point.Z * point.Z) -
+                  4.0 / 19.0,
+        point => -80.0 / 19.0 * (point.X * point.X + point.Y * point.Y + point.Z * point.Z))
+    .SetAssembler(new(new QuadraticBasis3D(), mesh2, new(Quadratures.TetrahedronOrder4()), useLinearShapeFunc: true))
     .SetIterativeSolver(new CGMCholesky(1000, 1E-15))
     .SetDirichletBoundaries(dirichletBoundaries);
 

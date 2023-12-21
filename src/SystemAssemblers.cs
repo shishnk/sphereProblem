@@ -78,7 +78,7 @@ public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator inte
     public void AssemblyLocalMatrices(int ielem)
     {
         _cache.CalculateCache.Clear();
-
+        
         for (int i = 0; i < Basis.Size; i++)
         {
             for (int j = 0; j <= i; j++)
@@ -149,16 +149,19 @@ public class SystemAssembler(BaseBasis3D basis, SphereMesh mesh, Integrator inte
         var dx = _cache.DerivativeVector.AsSpan(..3);
         var dy = _cache.DerivativeVector.AsSpan(3..6);
         var dz = _cache.DerivativeVector.AsSpan(6..9);
+        var innerBasis = basis;
+
+        if (useLinearShapeFunc) innerBasis = new LinearBasis3D();
 
         var element = Mesh.Elements[ielem];
 
-        for (int i = 0; i < Basis.Size; i++)
+        for (int i = 0; i < innerBasis.Size; i++)
         {
             for (int k = 0; k < varCount; k++)
             {
-                dx[k] += Basis.GetDPsi(i, k, point) * mesh.Points[element[i]].X;
-                dy[k] += Basis.GetDPsi(i, k, point) * mesh.Points[element[i]].Y;
-                dz[k] += Basis.GetDPsi(i, k, point) * mesh.Points[element[i]].Z;
+                dx[k] += innerBasis.GetDPsi(i, k, point) * mesh.Points[element[i]].X;
+                dy[k] += innerBasis.GetDPsi(i, k, point) * mesh.Points[element[i]].Y;
+                dz[k] += innerBasis.GetDPsi(i, k, point) * mesh.Points[element[i]].Z;
             }
         }
 

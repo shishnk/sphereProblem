@@ -8,8 +8,8 @@ namespace SphereProblem.SphereMeshContext;
 // ReSharper disable once ClassNeverInstantiated.Global
 public class SphereMeshParameters
 {
-    private readonly List<double> _radius = null!;
-    private bool _isQuadratic;
+    private List<double> _radius = null!;
+    private readonly bool _isQuadratic;
 
     public Point3D Center { get; }
 
@@ -52,15 +52,15 @@ public class SphereMeshParameters
         for (int i = 0; i < refinement; i++)
         {
             var count = _radius.Count - 1;
-
+        
             for (var j = 0; j < count; j++)
             {
                 _radius.Add((_radius[j] + _radius[j + 1]) / 2.0);
             }
+            
+            _radius.Sort();
         }
 
-        _radius.Sort();
-        
         // LINQ
         // _radius = Enumerable.Range(0, refinement)
         //     .Aggregate(_radius, (current, _) => current

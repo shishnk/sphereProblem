@@ -34,13 +34,13 @@ public abstract class BaseSphereMeshBuilder(SphereMeshParameters parameters)
 
                 for (int j = 0; j < thetaSplits; j++, idx++)
                 {
-                    // var x = r * Math.Sin(phi * i) * Math.Cos(j * theta) + parameters.Center.X;
-                    // var y = r * Math.Sin(phi * i) * Math.Sin(j * theta) + parameters.Center.Y;
-                    // var z = r * Math.Cos(phi * i) + parameters.Center.Z;
+                    var x = r * Math.Sin(phi * i) * Math.Cos(j * theta) + parameters.Center.X;
+                    var y = r * Math.Sin(phi * i) * Math.Sin(j * theta) + parameters.Center.Y;
+                    var z = r * Math.Cos(phi * i) + parameters.Center.Z;
 
-                    var x = theta * j;
-                    var y = r;
-                    var z = phi * i;
+                    // var x = theta * j;
+                    // var y = r;
+                    // var z = phi * i;
 
                     _points[idx] = (x, y, z);
                 }
@@ -345,55 +345,121 @@ public class QuadraticSphereMesh3DBuilder(SphereMeshParameters parameters) : Bas
                         parallelepipedNodes[26]
                     ]);
 
-                    var area = GetArea(parallelepipedNodes[3]); // take middle X face point
+                    // var p1 = _points[parallelepipedNodes[0]];
+                    // var p2 = _points[parallelepipedNodes[26]];
+                    // var area = GetArea((p1.Z + p2.Z) / 2);
+                    var area = GetArea(j);
                     var lambda = parameters.Properties[area];
 
+                    //
+                    // // you should have flipped
+                    // int[] newOrder =
+                    // [
+                    //     24, 25, 26, 15, 16, 17, 6, 7, 8, 21, 22, 23, 12, 13, 14, 3, 4, 5, 18, 19, 20, 9, 10, 11, 0, 1, 2
+                    // ];
+                    // var tempNodes = new int[27];
+                    //
+                    // for (int idx = 0; idx < newOrder.Length; idx++)
+                    // {
+                    //     tempNodes[idx] = parallelepipedNodes[newOrder[idx]];
+                    // }
+                    //
+                    // parallelepipedNodes = tempNodes;
+
+                    // _elements.Add(new(new[]
+                    // {
+                    //     // 0, 2, 6, 24 -- vertices
+                    //     parallelepipedNodes[0], parallelepipedNodes[2], parallelepipedNodes[6], parallelepipedNodes[24],
+                    //     parallelepipedNodes[1], parallelepipedNodes[3], parallelepipedNodes[12], parallelepipedNodes[4],
+                    //     parallelepipedNodes[13], parallelepipedNodes[15]
+                    // }, area, lambda));
+                    // _elements.Add(new(new[]
+                    // {
+                    //     // 0, 2, 24, 18
+                    //     parallelepipedNodes[0], parallelepipedNodes[2], parallelepipedNodes[24],
+                    //     parallelepipedNodes[18],
+                    //     parallelepipedNodes[1], parallelepipedNodes[12], parallelepipedNodes[9],
+                    //     parallelepipedNodes[13], parallelepipedNodes[10], parallelepipedNodes[21]
+                    // }, area, lambda));
+                    // _elements.Add(new(new[]
+                    // {
+                    //     // 2, 8, 6, 24
+                    //     parallelepipedNodes[2], parallelepipedNodes[8], parallelepipedNodes[6], parallelepipedNodes[24],
+                    //     parallelepipedNodes[5], parallelepipedNodes[4], parallelepipedNodes[13], parallelepipedNodes[7],
+                    //     parallelepipedNodes[16], parallelepipedNodes[15]
+                    // }, area, lambda));
+                    //
+                    // _elements.Add(new(new[]
+                    // {
+                    //     // 2, 26, 24, 20
+                    //     parallelepipedNodes[2], parallelepipedNodes[26], parallelepipedNodes[24],
+                    //     parallelepipedNodes[20],
+                    //     parallelepipedNodes[14], parallelepipedNodes[13], parallelepipedNodes[11],
+                    //     parallelepipedNodes[25], parallelepipedNodes[23], parallelepipedNodes[22]
+                    // }, area, lambda));
+                    // _elements.Add(new(new[]
+                    // {
+                    //     // 2, 8, 24, 26
+                    //     parallelepipedNodes[2], parallelepipedNodes[8], parallelepipedNodes[24],
+                    //     parallelepipedNodes[26],
+                    //     parallelepipedNodes[5], parallelepipedNodes[13], parallelepipedNodes[14],
+                    //     parallelepipedNodes[16], parallelepipedNodes[17], parallelepipedNodes[25]
+                    // }, area, lambda));
+                    // _elements.Add(new(new[]
+                    // {
+                    //     // 2, 24, 18, 20
+                    //     parallelepipedNodes[2], parallelepipedNodes[24], parallelepipedNodes[18],
+                    //     parallelepipedNodes[20],
+                    //     parallelepipedNodes[13], parallelepipedNodes[10], parallelepipedNodes[11],
+                    //     parallelepipedNodes[21], parallelepipedNodes[22], parallelepipedNodes[19]
+                    // }, area, lambda));
+
                     _elements.Add(new(new[]
                     {
-                        // 0, 2, 6, 24 -- vertices
-                        parallelepipedNodes[0], parallelepipedNodes[2], parallelepipedNodes[6], parallelepipedNodes[24],
-                        parallelepipedNodes[1], parallelepipedNodes[3], parallelepipedNodes[12], parallelepipedNodes[4],
-                        parallelepipedNodes[13], parallelepipedNodes[15]
+                        // 24, 26, 20, 8 -- vertices
+                        parallelepipedNodes[24], parallelepipedNodes[26], parallelepipedNodes[20],
+                        parallelepipedNodes[8],
+                        parallelepipedNodes[25], parallelepipedNodes[22], parallelepipedNodes[16],
+                        parallelepipedNodes[23], parallelepipedNodes[17], parallelepipedNodes[14]
                     }, area, lambda));
                     _elements.Add(new(new[]
                     {
-                        // 0, 2, 24, 18
-                        parallelepipedNodes[0], parallelepipedNodes[2], parallelepipedNodes[24],
-                        parallelepipedNodes[18],
-                        parallelepipedNodes[1], parallelepipedNodes[12], parallelepipedNodes[9],
-                        parallelepipedNodes[13], parallelepipedNodes[10], parallelepipedNodes[21]
+                        // 18, 24, 20, 2
+                        parallelepipedNodes[18], parallelepipedNodes[24], parallelepipedNodes[20],
+                        parallelepipedNodes[2],
+                        parallelepipedNodes[21], parallelepipedNodes[19], parallelepipedNodes[10],
+                        parallelepipedNodes[22], parallelepipedNodes[13], parallelepipedNodes[11]
                     }, area, lambda));
                     _elements.Add(new(new[]
                     {
-                        // 2, 8, 6, 24
-                        parallelepipedNodes[2], parallelepipedNodes[8], parallelepipedNodes[6], parallelepipedNodes[24],
-                        parallelepipedNodes[5], parallelepipedNodes[4], parallelepipedNodes[13], parallelepipedNodes[7],
-                        parallelepipedNodes[16], parallelepipedNodes[15]
+                        // 0, 18, 2, 6
+                        parallelepipedNodes[0], parallelepipedNodes[18], parallelepipedNodes[2], parallelepipedNodes[6],
+                        parallelepipedNodes[9], parallelepipedNodes[1], parallelepipedNodes[3], parallelepipedNodes[10],
+                        parallelepipedNodes[12], parallelepipedNodes[4]
                     }, area, lambda));
 
                     _elements.Add(new(new[]
                     {
-                        // 2, 26, 24, 20
-                        parallelepipedNodes[2], parallelepipedNodes[26], parallelepipedNodes[24],
-                        parallelepipedNodes[20],
-                        parallelepipedNodes[14], parallelepipedNodes[13], parallelepipedNodes[11],
-                        parallelepipedNodes[25], parallelepipedNodes[23], parallelepipedNodes[22]
+                        // 18, 24, 6, 2
+                        parallelepipedNodes[18], parallelepipedNodes[24], parallelepipedNodes[6],
+                        parallelepipedNodes[2],
+                        parallelepipedNodes[21], parallelepipedNodes[12], parallelepipedNodes[10],
+                        parallelepipedNodes[15], parallelepipedNodes[13], parallelepipedNodes[4]
                     }, area, lambda));
                     _elements.Add(new(new[]
                     {
-                        // 2, 8, 24, 26
-                        parallelepipedNodes[2], parallelepipedNodes[8], parallelepipedNodes[24],
-                        parallelepipedNodes[26],
-                        parallelepipedNodes[5], parallelepipedNodes[13], parallelepipedNodes[14],
-                        parallelepipedNodes[16], parallelepipedNodes[17], parallelepipedNodes[25]
+                        // 2, 20, 8, 24
+                        parallelepipedNodes[2], parallelepipedNodes[20], parallelepipedNodes[8],
+                        parallelepipedNodes[24],
+                        parallelepipedNodes[11], parallelepipedNodes[5], parallelepipedNodes[13],
+                        parallelepipedNodes[14], parallelepipedNodes[22], parallelepipedNodes[16]
                     }, area, lambda));
                     _elements.Add(new(new[]
                     {
-                        // 2, 24, 18, 20
-                        parallelepipedNodes[2], parallelepipedNodes[24], parallelepipedNodes[18],
-                        parallelepipedNodes[20],
-                        parallelepipedNodes[13], parallelepipedNodes[10], parallelepipedNodes[11],
-                        parallelepipedNodes[21], parallelepipedNodes[22], parallelepipedNodes[19]
+                        // 2, 6, 8, 24
+                        parallelepipedNodes[2], parallelepipedNodes[6], parallelepipedNodes[8], parallelepipedNodes[24],
+                        parallelepipedNodes[4], parallelepipedNodes[5], parallelepipedNodes[13], parallelepipedNodes[7],
+                        parallelepipedNodes[15], parallelepipedNodes[16]
                     }, area, lambda));
                 }
             }
@@ -401,11 +467,7 @@ public class QuadraticSphereMesh3DBuilder(SphereMeshParameters parameters) : Bas
 
         return;
 
-        int GetArea(int i)
-        {
-            var r = _points[i].Y; // take point from parallelepiped such as radius
-            return r > parameters.NotChangedRadius[1] ? 1 : 0;
-        }
+        int GetArea(int i) => ny / 2 <= i ? 0 : 1;
     }
 
     // TODO: create common method for both builders
@@ -447,7 +509,7 @@ public class QuadraticSphereMesh3DBuilder(SphereMeshParameters parameters) : Bas
             {
                 sw4.Write(node + " ");
             }
-            
+
             sw4.Write(element.AreaNumber);
             sw4.WriteLine();
         }
